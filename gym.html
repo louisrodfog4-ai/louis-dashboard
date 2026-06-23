@@ -404,18 +404,14 @@
   }
 
   .exercise-suggestions {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
+    position: fixed;
     background: #18181a;
-    border: 1px solid rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: 10px;
-    z-index: 200;
-    overflow: hidden;
+    z-index: 9999;
     display: none;
-    box-shadow: 0 8px 28px rgba(0,0,0,0.55);
-    max-height: 220px;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.65);
+    max-height: 260px;
     overflow-y: auto;
   }
   .exercise-suggestions.open { display: block; }
@@ -911,6 +907,61 @@
     }
   };
 
+  // ── Full exercise database ────────────────────────────────────────────────
+  const EXERCISE_DB = [
+    // Chest
+    'Bench Press','Incline Bench Press','Decline Bench Press',
+    'Dumbbell Bench Press','Incline Dumbbell Press','Decline Dumbbell Press',
+    'Dumbbell Floor Press','Floor Press','Dumbbell Fly','Incline Dumbbell Fly',
+    'Cable Fly','Incline Cable Fly','Cable Crossover','Pec Deck',
+    'Chest Press Machine','Push Ups','Wide Push Ups','Diamond Push Ups',
+    'Decline Push Ups','Pike Push Ups','Dips',
+    // Shoulders
+    'Overhead Press','Dumbbell Shoulder Press','Arnold Press','Machine Shoulder Press',
+    'Lateral Raises','Cable Lateral Raise','Dumbbell Lateral Raise',
+    'Front Raises','Cable Front Raise',
+    'Rear Delt Fly','Reverse Fly','Reverse Pec Deck','Face Pulls','Upright Row',
+    'Barbell Shrugs','Dumbbell Shrugs',
+    // Back
+    'Deadlift','Conventional Deadlift','Sumo Deadlift','Romanian Deadlift',
+    'Dumbbell RDL','Rack Pull','Trap Bar Deadlift',
+    'Barbell Row','Dumbbell Row','Single Arm Row','T-Bar Row',
+    'Chest Supported Row','Meadows Row',
+    'Pull Ups','Chin Ups','Neutral Grip Pull Ups','Assisted Pull Up',
+    'Lat Pulldown','Single Arm Lat Pulldown',
+    'Seated Cable Row','Cable Row','Machine Row',
+    'Straight Arm Pulldown','Pullover','Dumbbell Pullover',
+    // Biceps
+    'Barbell Curl','Dumbbell Curl','Hammer Curl','Reverse Curl',
+    'EZ Bar Curl','Preacher Curl','EZ Bar Preacher Curl',
+    'Concentration Curl','Incline Dumbbell Curl','Spider Curl',
+    'Cable Curl','Machine Curl','Zottman Curl',
+    // Triceps
+    'Tricep Pushdown','Overhead Tricep Extension','Cable Overhead Extension',
+    'Skull Crusher','EZ Bar Skull Crusher','Close Grip Bench Press',
+    'Tricep Kickback','Machine Tricep Press','Tricep Dips','Assisted Dip',
+    // Legs
+    'Barbell Squat','Back Squat','Front Squat','Pause Squat','Box Squat',
+    'Goblet Squat','Sumo Squat','Hack Squat','Smith Machine Squat',
+    'Leg Press','Leg Curl','Lying Leg Curl','Seated Leg Curl','Leg Extension',
+    'Hip Thrust','Glute Bridge','Bulgarian Split Squat',
+    'Lunges','Walking Lunges','Reverse Lunges','Step Ups',
+    'Calf Raise','Seated Calf Raise','Leg Press Calf Raise',
+    'Nordic Curl','Good Mornings',
+    // Core
+    'Plank','Side Plank','Ab Wheel','Cable Crunch','Machine Crunch',
+    'Hanging Leg Raise','Hanging Knee Raise',
+    'Russian Twist','Dead Bug','Hollow Hold','V-Ups',
+    'Sit Ups','Crunches','Bicycle Crunches','Leg Raises','Dragon Flag',
+    // Full body / compound
+    'Deadlift','Power Clean','Clean and Press','Hang Clean','Snatch',
+    "Farmer's Walk",'Turkish Get Up','Kettlebell Swing','Kettlebell Clean',
+    'Thruster','Burpees',
+    // Resistance band / bodyweight
+    'Resistance Band Row','Resistance Band Curl','Resistance Band Press',
+    'Band Pull-Apart',
+  ].filter((v, i, a) => a.indexOf(v) === i).sort(); // dedupe + sort
+
   const WEIGHT_KEY   = 'gym_weight';
   const SESSIONS_KEY = 'gym_sessions';
 
@@ -1101,11 +1152,35 @@
   // ── Exercise search / suggestions ────────────────────────────────────────
   let suggestionFocusIdx = -1;
 
+  function positionSuggestions() {
+    const input = document.getElementById('exerciseSearch');
+    const box   = document.getElementById('exerciseSuggestions');
+    const rect  = input.getBoundingClientRect();
+    box.style.top   = (rect.bottom + 4) + 'px';
+    box.style.left  = rect.left + 'px';
+    box.style.width = rect.width + 'px';
+  }
+
   function getFilteredExercises(query) {
     const session = getOrCreateSession();
-    const list = EXERCISES[dayType][gymType];
+    const added = session.exercises;
     const q = query.toLowerCase().trim();
-    return list.filter(name => !session.exercises[name] && (!q || name.toLowerCase().includes(q)));
+
+    if (!q) {
+      // No query: show the curated day-type list, filtering out already-added
+      return EXERCISES[dayType][gymType].filter(n => !added[n]);
+    }
+
+    // Search full DB: starts-with first, then contains
+    const startsWith = [];
+    const contains   = [];
+    for (const name of EXERCISE_DB) {
+      if (added[name]) continue;
+      const lower = name.toLowerCase();
+      if (lower.startsWith(q))     startsWith.push(name);
+      else if (lower.includes(q))  contains.push(name);
+    }
+    return [...startsWith, ...contains].slice(0, 10);
   }
 
   function renderSuggestions(query) {
@@ -1116,7 +1191,7 @@
     suggestionFocusIdx = -1;
 
     const items = filtered.map(n => ({ label: n, value: n }));
-    const exactMatch = filtered.some(n => n.toLowerCase() === q.toLowerCase());
+    const exactMatch = EXERCISE_DB.some(n => n.toLowerCase() === q.toLowerCase());
     if (q && !exactMatch) items.push({ label: '+ Add "' + q + '"', value: q, custom: true });
 
     if (items.length === 0) { box.classList.remove('open'); return; }
@@ -1128,6 +1203,7 @@
       div.addEventListener('mousedown', e => { e.preventDefault(); addExerciseByName(value); });
       box.appendChild(div);
     });
+    positionSuggestions();
     box.classList.add('open');
   }
 
@@ -1708,6 +1784,10 @@
   }
 
   // ── Resize → redraw chart ─────────────────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    if (document.getElementById('exerciseSuggestions').classList.contains('open')) positionSuggestions();
+  }, { passive: true });
+
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
