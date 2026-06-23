@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gym Tracker — Louis Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --text-primary: #FAFAFA;
+    --text-secondary: #B8B6B0;
+    --text-tertiary: #76746E;
+    --success: #6BE3A4;
+    --warning: #F2C063;
+    --danger: #FF6B6B;
+    --card-bg: rgba(255,255,255,0.04);
+    --card-radius: 16px;
+    --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  body {
+    min-height: 100vh;
+    background: #050506;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text-primary);
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(107,227,164,0.08) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 90%, rgba(180,180,200,0.06) 0%, transparent 55%);
+    filter: blur(40px);
+    animation: wash 36s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='3' height='3'%3E%3Crect width='1' height='1' fill='rgba(255,255,255,0.014)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes wash {
+    0%   { opacity: 1; transform: scale(1) translate(0,0); }
+    100% { opacity: 0.85; transform: scale(1.04) translate(1%,-1%); }
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: env(safe-area-inset-top, 32px) 24px 48px;
+  }
+
+  .back-link {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    text-decoration: none;
+    margin-bottom: 12px;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--text-secondary); }
+
+  .dash-title {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 18px;
+  }
+
+  .section { margin-bottom: 18px; }
+
+  .section-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .section-title::before { content: ''; width: 18px; height: 1px; background: var(--text-tertiary); opacity: 0.6; flex-shrink: 0; }
+  .section-title::after  { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent); }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: var(--card-radius);
+    padding: 20px 22px;
+    backdrop-filter: blur(24px) saturate(1.2);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  }
+
+  /* ── Weight card ── */
+  .weight-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .weight-display {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .weight-num {
+    font-family: var(--font-mono);
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  .weight-unit {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    color: var(--text-tertiary);
+  }
+
+  .weight-delta {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text-tertiary);
+  }
+  .weight-delta.up   { background: rgba(255,107,107,0.12); color: var(--danger); }
+  .weight-delta.down { background: rgba(107,227,164,0.12); color: var(--success); }
+
+  .weight-chart-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  #weightChart {
+    display: block;
+    width: 100%;
+    height: 120px;
+    border-radius: 8px;
+  }
+
+  .chart-empty {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-style: italic;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+
+  .weight-input-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* ── Session controls ── */
+  .session-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+
+  .seg-control {
+    display: flex;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .seg-btn {
+    padding: 7px 18px;
+    border-radius: 8px;
+    border: none;
+    background: none;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .seg-btn.active {
+    background: rgba(255,255,255,0.10);
+    color: var(--text-primary);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  .gym-toggle {
+    display: flex;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .toggle-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: none;
+    background: none;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+  }
+
+  .toggle-btn.active {
+    background: rgba(255,255,255,0.10);
+    color: var(--text-primary);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  /* ── Exercise blocks ── */
+  .exercise-block {
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .exercise-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .exercise-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .exercise-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .overload-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--warning);
+    background: rgba(242,192,99,0.10);
+    border: 1px solid rgba(242,192,99,0.20);
+    padding: 3px 8px;
+    border-radius: 999px;
+  }
+
+  .remove-exercise-btn {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 4px;
+    opacity: 0.5;
+    transition: opacity 0.2s, color 0.2s;
+    line-height: 1;
+  }
+  .remove-exercise-btn:hover { opacity: 1; color: var(--danger); }
+
+  .sets-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+    min-height: 0;
+  }
+
+  .set-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.06);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  .set-chip .set-del {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    padding: 0;
+    line-height: 1;
+    margin-left: 2px;
+    opacity: 0.5;
+    transition: opacity 0.2s, color 0.2s;
+  }
+  .set-chip:hover .set-del { opacity: 1; }
+  .set-chip .set-del:hover { color: var(--danger); }
+
+  .set-chip.is-pr {
+    background: rgba(242,192,99,0.12);
+    color: var(--warning);
+    border: 1px solid rgba(242,192,99,0.25);
+  }
+
+  .add-set-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .set-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 0 8px;
+    transition: border-color 0.2s;
+  }
+  .set-input-wrap:focus-within { border-color: rgba(255,255,255,0.22); }
+
+  .set-input {
+    width: 54px;
+    padding: 8px 0;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+    text-align: center;
+  }
+  .set-input::placeholder { color: var(--text-tertiary); }
+
+  .set-input-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+  }
+
+  /* ── Add exercise row ── */
+  .add-exercise-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ── Shared inputs / buttons ── */
+  .gym-input, .gym-select {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 0;
+  }
+  .gym-input::placeholder { color: var(--text-tertiary); }
+  .gym-input:focus, .gym-select:focus { border-color: rgba(255,255,255,0.25); }
+  .gym-select option { background: #1a1a1c; color: var(--text-primary); }
+
+  .gym-btn-primary {
+    padding: 10px 18px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+    color: #0A0A0B;
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.8);
+    transition: transform 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+  }
+  .gym-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.9); }
+
+  .gym-btn-secondary {
+    padding: 10px 18px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 700;
+    border: 1px solid rgba(255,255,255,0.10);
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .gym-btn-secondary:hover { background: rgba(255,255,255,0.08); }
+
+  .gym-btn-sm {
+    padding: 7px 14px;
+    border-radius: 8px;
+    background: rgba(107,227,164,0.12);
+    color: var(--success);
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid rgba(107,227,164,0.20);
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .gym-btn-sm:hover { background: rgba(107,227,164,0.20); }
+
+  /* ── Stats grid ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  @media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .dash-title { font-size: 22px; }
+    .weight-num { font-size: 32px; }
+  }
+
+  .stats-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .stats-big {
+    font-family: var(--font-mono);
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  .stats-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  .stats-sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 6px;
+  }
+
+  /* ── PRs ── */
+  .pr-header {
+    margin-bottom: 12px;
+  }
+
+  .pr-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .pr-table th {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    text-align: left;
+    padding: 0 0 8px;
+  }
+
+  .pr-table th:not(:first-child) { text-align: right; }
+
+  .pr-table td {
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 7px 0;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    vertical-align: middle;
+  }
+
+  .pr-table td:not(:first-child) {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pr-table td:first-child { color: var(--text-primary); font-weight: 500; }
+
+  .pr-weight {
+    color: var(--warning) !important;
+    font-weight: 700 !important;
+  }
+
+  .empty-state {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-style: italic;
+    padding: 14px 0;
+    text-align: center;
+  }
+
+  /* ── Volume bar chart ── */
+  .vol-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 60px;
+    margin-top: 10px;
+  }
+
+  .vol-bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .vol-bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    background: rgba(107,227,164,0.30);
+    transition: height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    min-height: 2px;
+  }
+
+  .vol-bar.today { background: rgba(107,227,164,0.65); }
+
+  .vol-day-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-tertiary);
+    text-align: center;
+  }
+
+  /* Nav from index */
+  .nav-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .nav-link {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid transparent;
+    transition: color 0.2s, background 0.2s, border-color 0.2s;
+  }
+  .nav-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.07); }
+  .nav-link.active {
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.10);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="nav-bar">
+    <a href="index.html" class="nav-link">Dashboard</a>
+    <a href="gym.html"   class="nav-link active">Gym</a>
+  </div>
+
+  <h1 class="dash-title">Gym Tracker</h1>
+
+  <!-- Body Weight -->
+  <div class="section">
+    <div class="section-title">Body Weight</div>
+    <div class="card">
+      <div class="weight-top">
+        <div class="weight-display">
+          <span class="weight-num" id="weightNum">--</span>
+          <span class="weight-unit">kg</span>
+        </div>
+        <div class="weight-delta" id="weightDelta" style="display:none"></div>
+      </div>
+      <div class="weight-chart-wrap">
+        <canvas id="weightChart"></canvas>
+        <div class="chart-empty" id="chartEmpty" style="display:none">Log at least 2 entries to see your trend.</div>
+      </div>
+      <div class="weight-input-row">
+        <input type="number" class="gym-input" id="weightInput" placeholder="Today's weight (kg)" step="0.1" min="20" max="300">
+        <button class="gym-btn-primary" id="weightLogBtn">Log</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's Session -->
+  <div class="section">
+    <div class="section-title">Today's Session</div>
+    <div class="card">
+      <div class="session-controls">
+        <div class="seg-control" id="pplSel">
+          <button class="seg-btn active" data-val="push">Push</button>
+          <button class="seg-btn" data-val="pull">Pull</button>
+          <button class="seg-btn" data-val="legs">Legs</button>
+        </div>
+        <div class="gym-toggle" id="gymToggle">
+          <button class="toggle-btn active" data-val="home">🏠 Home</button>
+          <button class="toggle-btn" data-val="commercial">🏋️ Commercial</button>
+        </div>
+      </div>
+
+      <div id="exerciseBlocks"></div>
+
+      <div class="add-exercise-row">
+        <select class="gym-select" id="exerciseSel">
+          <option value="">Select exercise…</option>
+        </select>
+        <button class="gym-btn-secondary" id="addExerciseBtn">+ Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="section">
+    <div class="section-title">Stats</div>
+
+    <div class="stats-grid">
+      <!-- Volume this week -->
+      <div class="card">
+        <span class="stats-eyebrow">This Week</span>
+        <div class="stats-big" id="weekVolume">0</div>
+        <div class="stats-label">kg total volume</div>
+        <div class="vol-bars" id="volBars"></div>
+      </div>
+      <!-- Session streak -->
+      <div class="card">
+        <span class="stats-eyebrow">Streak</span>
+        <div class="stats-big" id="streakCount">0</div>
+        <div class="stats-label">consecutive days</div>
+        <div class="stats-sub" id="lastSessionDate">No sessions logged yet</div>
+      </div>
+    </div>
+
+    <!-- PRs -->
+    <div class="card" id="prsCard">
+      <div class="pr-header">
+        <span class="stats-eyebrow">Personal Records</span>
+      </div>
+      <div id="prsBody">
+        <div class="empty-state" id="prsEmpty">Log some workouts to see your PRs here.</div>
+        <table class="pr-table" id="prsTable" style="display:none">
+          <thead>
+            <tr>
+              <th>Exercise</th>
+              <th>Best Weight</th>
+              <th>Reps</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="prsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+  // ── Constants ─────────────────────────────────────────────────────────────
+  const EXERCISES = {
+    push: {
+      home:       ['Push Ups', 'Pike Push Ups', 'Dumbbell Floor Press', 'Dumbbell Shoulder Press', 'Lateral Raises', 'Tricep Dips', 'Diamond Push Ups'],
+      commercial: ['Bench Press', 'Incline Dumbbell Press', 'Overhead Press', 'Lateral Raises', 'Tricep Pushdown', 'Cable Fly', 'Dips', 'Chest Press Machine']
+    },
+    pull: {
+      home:       ['Pull Ups', 'Chin Ups', 'Dumbbell Row', 'Dumbbell Curl', 'Hammer Curl', 'Resistance Band Row', 'Reverse Fly'],
+      commercial: ['Pull Ups', 'Barbell Row', 'Lat Pulldown', 'Seated Cable Row', 'Face Pulls', 'Barbell Curl', 'Hammer Curl', 'Cable Row']
+    },
+    legs: {
+      home:       ['Goblet Squat', 'Bulgarian Split Squat', 'Dumbbell RDL', 'Glute Bridge', 'Step Ups', 'Calf Raise', 'Lunges', 'Sumo Squat'],
+      commercial: ['Barbell Squat', 'Romanian Deadlift', 'Leg Press', 'Leg Curl', 'Leg Extension', 'Calf Raise', 'Hip Thrust', 'Hack Squat']
+    }
+  };
+
+  const WEIGHT_KEY   = 'gym_weight';
+  const SESSIONS_KEY = 'gym_sessions';
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  // ── Storage ───────────────────────────────────────────────────────────────
+  function load(key)        { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
+  function save(key, val)   { localStorage.setItem(key, JSON.stringify(val)); }
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  let dayType  = 'push';
+  let gymType  = 'home';
+
+  function getSessions() { return load(SESSIONS_KEY) || {}; }
+
+  function getOrCreateSession() {
+    const sessions = getSessions();
+    if (!sessions[todayStr]) {
+      sessions[todayStr] = { dayType, gymType, exercises: {} };
+    }
+    return sessions[todayStr];
+  }
+
+  function saveSession(session) {
+    const sessions = getSessions();
+    sessions[todayStr] = session;
+    save(SESSIONS_KEY, sessions);
+  }
+
+  // ── Progressive overload suggestion ──────────────────────────────────────
+  function getProgressionSuggestion(exerciseName) {
+    const sessions = getSessions();
+    const dates = Object.keys(sessions).sort().reverse();
+    for (const d of dates) {
+      if (d === todayStr) continue;
+      const sets = sessions[d].exercises[exerciseName];
+      if (sets && sets.length > 0) {
+        const last = sets[sets.length - 1];
+        if (last.reps >= 8) {
+          return { weight: last.weight + 2.5, reason: `Hit ${last.reps} reps last time` };
+        }
+        return { weight: last.weight, reason: null };
+      }
+    }
+    // check today's previous sets for same exercise
+    return null;
+  }
+
+  // ── PR tracking ───────────────────────────────────────────────────────────
+  function computePRs() {
+    const sessions = getSessions();
+    const prs = {};
+    for (const [date, s] of Object.entries(sessions)) {
+      for (const [name, sets] of Object.entries(s.exercises)) {
+        for (const set of sets) {
+          if (!prs[name] || set.weight > prs[name].weight ||
+              (set.weight === prs[name].weight && set.reps > prs[name].reps)) {
+            prs[name] = { weight: set.weight, reps: set.reps, date };
+          }
+        }
+      }
+    }
+    return prs;
+  }
+
+  function isSessionPR(exerciseName, weight, reps) {
+    const prs = computePRs();
+    const pr = prs[exerciseName];
+    if (!pr) return false;
+    return pr.weight === weight && pr.reps === reps &&
+           Object.keys(getSessions()).find(d => {
+             const s = getSessions()[d];
+             return s.exercises[exerciseName] &&
+               s.exercises[exerciseName].some(set => set.weight === weight && set.reps === reps);
+           }) === Object.keys(getSessions()).sort().reverse()[0];
+  }
+
+  // ── Exercise selector population ─────────────────────────────────────────
+  function populateExerciseSel() {
+    const sel = document.getElementById('exerciseSel');
+    const list = EXERCISES[dayType][gymType];
+    const session = getOrCreateSession();
+    sel.innerHTML = '<option value="">Select exercise…</option>';
+    list.forEach(name => {
+      if (session.exercises[name]) return; // already added
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    });
+    // also allow typing a custom name via a freeform option if nothing matched
+  }
+
+  // ── Render exercise blocks ────────────────────────────────────────────────
+  function renderExerciseBlocks() {
+    const container = document.getElementById('exerciseBlocks');
+    container.innerHTML = '';
+    const session = getOrCreateSession();
+    const names = Object.keys(session.exercises);
+
+    if (names.length === 0) {
+      container.innerHTML = '<div class="empty-state" style="margin-bottom:10px">No exercises yet — select one below and hit + Add.</div>';
+      populateExerciseSel();
+      return;
+    }
+
+    names.forEach(name => {
+      const sets = session.exercises[name];
+      const suggestion = getProgressionSuggestion(name);
+      const block = document.createElement('div');
+      block.className = 'exercise-block';
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'exercise-block-header';
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'exercise-name';
+      nameEl.textContent = name;
+      header.appendChild(nameEl);
+
+      const actions = document.createElement('div');
+      actions.className = 'exercise-actions';
+
+      if (suggestion && suggestion.reason) {
+        const badge = document.createElement('span');
+        badge.className = 'overload-badge';
+        badge.textContent = '↑ ' + suggestion.weight + 'kg suggested';
+        badge.title = suggestion.reason;
+        actions.appendChild(badge);
+      }
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-exercise-btn';
+      removeBtn.textContent = '×';
+      removeBtn.title = 'Remove exercise';
+      removeBtn.addEventListener('click', () => {
+        if (!confirm('Remove ' + name + ' from today\'s session?')) return;
+        delete session.exercises[name];
+        saveSession(session);
+        renderExerciseBlocks();
+        renderStats();
+      });
+      actions.appendChild(removeBtn);
+      header.appendChild(actions);
+      block.appendChild(header);
+
+      // Sets list
+      const setsList = document.createElement('div');
+      setsList.className = 'sets-list';
+
+      sets.forEach((set, i) => {
+        const prs = computePRs();
+        const pr = prs[name];
+        const isPR = pr && set.weight >= pr.weight;
+
+        const chip = document.createElement('span');
+        chip.className = 'set-chip' + (isPR ? ' is-pr' : '');
+        chip.innerHTML = `<span>Set ${i + 1}: ${set.weight}kg × ${set.reps}</span>`;
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'set-del';
+        delBtn.textContent = '×';
+        delBtn.title = 'Remove set';
+        delBtn.addEventListener('click', () => {
+          session.exercises[name].splice(i, 1);
+          if (session.exercises[name].length === 0) delete session.exercises[name];
+          saveSession(session);
+          renderExerciseBlocks();
+          renderStats();
+        });
+        chip.appendChild(delBtn);
+        setsList.appendChild(chip);
+      });
+
+      block.appendChild(setsList);
+
+      // Add set row
+      const addSetRow = document.createElement('div');
+      addSetRow.className = 'add-set-row';
+
+      const defaultWeight = suggestion ? suggestion.weight : (sets.length > 0 ? sets[sets.length - 1].weight : 0);
+      const defaultReps   = sets.length > 0 ? sets[sets.length - 1].reps : 8;
+
+      const weightWrap = document.createElement('div');
+      weightWrap.className = 'set-input-wrap';
+      weightWrap.innerHTML = `<span class="set-input-label">kg</span>`;
+      const weightInput = document.createElement('input');
+      weightInput.type = 'number';
+      weightInput.className = 'set-input';
+      weightInput.placeholder = '0';
+      weightInput.min = '0';
+      weightInput.step = '2.5';
+      weightInput.value = defaultWeight || '';
+      weightWrap.appendChild(weightInput);
+
+      const repsWrap = document.createElement('div');
+      repsWrap.className = 'set-input-wrap';
+      repsWrap.innerHTML = `<span class="set-input-label">reps</span>`;
+      const repsInput = document.createElement('input');
+      repsInput.type = 'number';
+      repsInput.className = 'set-input';
+      repsInput.placeholder = '8';
+      repsInput.min = '1';
+      repsInput.max = '100';
+      repsInput.value = defaultReps || '';
+      repsWrap.appendChild(repsInput);
+
+      const logBtn = document.createElement('button');
+      logBtn.className = 'gym-btn-sm';
+      logBtn.textContent = '+ Log Set';
+
+      logBtn.addEventListener('click', () => {
+        const w = parseFloat(weightInput.value);
+        const r = parseInt(repsInput.value, 10);
+        if (isNaN(w) || w < 0 || isNaN(r) || r < 1) return;
+        if (!session.exercises[name]) session.exercises[name] = [];
+        session.exercises[name].push({ weight: w, reps: r });
+        saveSession(session);
+        renderExerciseBlocks();
+        renderStats();
+      });
+
+      // Log on Enter in reps field
+      repsInput.addEventListener('keydown', e => { if (e.key === 'Enter') logBtn.click(); });
+
+      addSetRow.appendChild(weightWrap);
+      addSetRow.appendChild(repsWrap);
+      addSetRow.appendChild(logBtn);
+      block.appendChild(addSetRow);
+
+      container.appendChild(block);
+    });
+
+    populateExerciseSel();
+  }
+
+  // ── Weight chart ──────────────────────────────────────────────────────────
+  function drawWeightChart() {
+    const entries = (load(WEIGHT_KEY) || []).slice(-30);
+    const canvas = document.getElementById('weightChart');
+    const empty  = document.getElementById('chartEmpty');
+
+    if (entries.length < 2) {
+      canvas.style.display = 'none';
+      empty.style.display = 'flex';
+      return;
+    }
+
+    canvas.style.display = 'block';
+    empty.style.display = 'none';
+
+    const dpr = window.devicePixelRatio || 1;
+    const W   = canvas.parentElement.clientWidth;
+    const H   = 120;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const pad = { top: 12, right: 10, bottom: 22, left: 38 };
+    const cW = W - pad.left - pad.right;
+    const cH = H - pad.top - pad.bottom;
+
+    const weights = entries.map(e => e.kg);
+    const rawMin = Math.min(...weights);
+    const rawMax = Math.max(...weights);
+    const range  = rawMax - rawMin || 2;
+    const minW   = rawMin - range * 0.2;
+    const maxW   = rawMax + range * 0.2;
+    const valRange = maxW - minW;
+
+    function xp(i) { return pad.left + (i / (entries.length - 1)) * cW; }
+    function yp(w) { return pad.top + (1 - (w - minW) / valRange) * cH; }
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.top + (i / 4) * cH;
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
+    }
+
+    // Y labels
+    ctx.fillStyle = 'rgba(118,116,110,0.8)';
+    ctx.font = `${9 * dpr / dpr}px ${getComputedStyle(document.body).getPropertyValue('--font-mono') || 'monospace'}`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i <= 4; i++) {
+      const w = minW + (i / 4) * valRange;
+      const y = pad.top + (1 - i / 4) * cH;
+      ctx.fillText(w.toFixed(1), pad.left - 5, y);
+    }
+
+    // X date labels (first, mid, last)
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const labelIdxs = [0, Math.floor((entries.length - 1) / 2), entries.length - 1];
+    labelIdxs.forEach(i => {
+      const d = new Date(entries[i].date + 'T00:00:00');
+      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      ctx.fillText(label, xp(i), H - pad.bottom + 5);
+    });
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+    grad.addColorStop(0, 'rgba(107,227,164,0.22)');
+    grad.addColorStop(1, 'rgba(107,227,164,0)');
+    ctx.beginPath();
+    ctx.moveTo(xp(0), yp(weights[0]));
+    for (let i = 1; i < entries.length; i++) ctx.lineTo(xp(i), yp(weights[i]));
+    ctx.lineTo(xp(entries.length - 1), pad.top + cH);
+    ctx.lineTo(xp(0), pad.top + cH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(xp(0), yp(weights[0]));
+    for (let i = 1; i < entries.length; i++) ctx.lineTo(xp(i), yp(weights[i]));
+    ctx.strokeStyle = '#6BE3A4';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // Dots
+    entries.forEach((e, i) => {
+      ctx.beginPath();
+      ctx.arc(xp(i), yp(e.kg), i === entries.length - 1 ? 4 : 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = i === entries.length - 1 ? '#6BE3A4' : 'rgba(107,227,164,0.6)';
+      ctx.fill();
+    });
+  }
+
+  // ── Render weight header ──────────────────────────────────────────────────
+  function renderWeightHeader() {
+    const entries = load(WEIGHT_KEY) || [];
+    const numEl   = document.getElementById('weightNum');
+    const deltaEl = document.getElementById('weightDelta');
+
+    if (entries.length === 0) { numEl.textContent = '--'; deltaEl.style.display = 'none'; return; }
+
+    const today = entries.find(e => e.date === todayStr);
+    const latest = today || entries[entries.length - 1];
+    numEl.textContent = latest.kg.toFixed(1);
+
+    if (entries.length >= 2) {
+      const prev = entries[entries.length - (today ? 2 : 1)];
+      if (prev) {
+        const diff = latest.kg - prev.kg;
+        const sign = diff > 0 ? '+' : '';
+        deltaEl.textContent = sign + diff.toFixed(1) + ' kg';
+        deltaEl.className = 'weight-delta' + (diff > 0 ? ' up' : diff < 0 ? ' down' : '');
+        deltaEl.style.display = '';
+      }
+    }
+  }
+
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  function renderStats() {
+    const sessions = getSessions();
+    const dates = Object.keys(sessions).sort();
+
+    // Weekly volume + vol bars
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const today = new Date();
+    const barsEl = document.getElementById('volBars');
+    barsEl.innerHTML = '';
+    let weekVol = 0;
+    const last7 = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const ds = d.toISOString().slice(0, 10);
+      const s = sessions[ds];
+      let vol = 0;
+      if (s) {
+        for (const sets of Object.values(s.exercises)) {
+          for (const set of sets) vol += set.weight * set.reps;
+        }
+      }
+      last7.push({ ds, vol, label: dayNames[d.getDay()] });
+      weekVol += vol;
+    }
+    document.getElementById('weekVolume').textContent = Math.round(weekVol).toLocaleString();
+
+    const maxVol = Math.max(...last7.map(d => d.vol), 1);
+    last7.forEach(({ ds, vol, label }) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'vol-bar-wrap';
+      const bar = document.createElement('div');
+      bar.className = 'vol-bar' + (ds === todayStr ? ' today' : '');
+      const pct = Math.max((vol / maxVol) * 100, vol > 0 ? 4 : 0);
+      bar.style.height = pct + '%';
+      bar.title = label + ': ' + Math.round(vol) + 'kg';
+      const lbl = document.createElement('div');
+      lbl.className = 'vol-day-label';
+      lbl.textContent = label;
+      wrap.appendChild(bar);
+      wrap.appendChild(lbl);
+      barsEl.appendChild(wrap);
+    });
+
+    // Streak
+    let streak = 0;
+    const sorted = dates.slice().sort().reverse();
+    let checkDate = new Date(todayStr);
+    for (const ds of sorted) {
+      const expected = checkDate.toISOString().slice(0, 10);
+      if (ds === expected) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else if (ds < expected) {
+        break;
+      }
+    }
+    document.getElementById('streakCount').textContent = streak;
+    if (dates.length > 0) {
+      const last = dates[dates.length - 1];
+      const d = new Date(last + 'T00:00:00');
+      document.getElementById('lastSessionDate').textContent =
+        'Last: ' + d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    // PRs
+    const prs = computePRs();
+    const prEntries = Object.entries(prs).sort((a, b) => a[0].localeCompare(b[0]));
+    const prsEmpty = document.getElementById('prsEmpty');
+    const prsTable = document.getElementById('prsTable');
+    const prsTbody = document.getElementById('prsTbody');
+
+    if (prEntries.length === 0) {
+      prsEmpty.style.display = 'block';
+      prsTable.style.display = 'none';
+    } else {
+      prsEmpty.style.display = 'none';
+      prsTable.style.display = 'table';
+      prsTbody.innerHTML = '';
+      prEntries.forEach(([name, pr]) => {
+        const tr = document.createElement('tr');
+        const d = new Date(pr.date + 'T00:00:00');
+        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        tr.innerHTML = `
+          <td>${name}</td>
+          <td class="pr-weight">${pr.weight}kg</td>
+          <td>${pr.reps}</td>
+          <td>${dateStr}</td>
+        `;
+        prsTbody.appendChild(tr);
+      });
+    }
+  }
+
+  // ── Controls wiring ───────────────────────────────────────────────────────
+  document.getElementById('pplSel').addEventListener('click', e => {
+    const btn = e.target.closest('.seg-btn');
+    if (!btn) return;
+    document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    dayType = btn.dataset.val;
+    const session = getOrCreateSession();
+    session.dayType = dayType;
+    saveSession(session);
+    populateExerciseSel();
+  });
+
+  document.getElementById('gymToggle').addEventListener('click', e => {
+    const btn = e.target.closest('.toggle-btn');
+    if (!btn) return;
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    gymType = btn.dataset.val;
+    const session = getOrCreateSession();
+    session.gymType = gymType;
+    saveSession(session);
+    populateExerciseSel();
+  });
+
+  document.getElementById('addExerciseBtn').addEventListener('click', () => {
+    const sel = document.getElementById('exerciseSel');
+    const name = sel.value.trim();
+    if (!name) return;
+    const session = getOrCreateSession();
+    if (!session.exercises[name]) session.exercises[name] = [];
+    saveSession(session);
+    sel.value = '';
+    renderExerciseBlocks();
+    renderStats();
+  });
+
+  // Weight logging
+  document.getElementById('weightLogBtn').addEventListener('click', () => {
+    const val = parseFloat(document.getElementById('weightInput').value);
+    if (isNaN(val) || val < 20 || val > 300) return;
+    const entries = load(WEIGHT_KEY) || [];
+    const idx = entries.findIndex(e => e.date === todayStr);
+    if (idx >= 0) entries[idx].kg = val;
+    else entries.push({ date: todayStr, kg: val });
+    save(WEIGHT_KEY, entries);
+    document.getElementById('weightInput').value = '';
+    renderWeightHeader();
+    drawWeightChart();
+  });
+
+  document.getElementById('weightInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('weightLogBtn').click();
+  });
+
+  // ── Load today's session state into controls ───────────────────────────────
+  function initSessionControls() {
+    const sessions = getSessions();
+    const s = sessions[todayStr];
+    if (s) {
+      dayType = s.dayType || 'push';
+      gymType = s.gymType || 'home';
+      document.querySelectorAll('.seg-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === dayType);
+      });
+      document.querySelectorAll('.toggle-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === gymType);
+      });
+    }
+  }
+
+  // ── Resize → redraw chart ─────────────────────────────────────────────────
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(drawWeightChart, 150);
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  initSessionControls();
+  renderWeightHeader();
+  drawWeightChart();
+  renderExerciseBlocks();
+  renderStats();
+</script>
+</body>
+</html>
