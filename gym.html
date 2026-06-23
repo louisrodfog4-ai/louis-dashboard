@@ -1109,8 +1109,9 @@
 
     // Gradient fill
     const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
-    grad.addColorStop(0, 'rgba(242,192,99,0.18)');
-    grad.addColorStop(1, 'rgba(242,192,99,0)');
+    grad.addColorStop(0,   'rgba(255,148,64,0.52)');
+    grad.addColorStop(0.5, 'rgba(255,148,64,0.18)');
+    grad.addColorStop(1,   'rgba(255,148,64,0)');
     ctx.beginPath();
     ctx.moveTo(xp(0), yp(values[0]));
     for (let i = 1; i < history.length; i++) ctx.lineTo(xp(i), yp(values[i]));
@@ -1124,8 +1125,8 @@
     ctx.beginPath();
     ctx.moveTo(xp(0), yp(values[0]));
     for (let i = 1; i < history.length; i++) ctx.lineTo(xp(i), yp(values[i]));
-    ctx.strokeStyle = '#F2C063';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#FF9440';
+    ctx.lineWidth = 2.5;
     ctx.lineJoin = 'round';
     ctx.stroke();
 
@@ -1133,8 +1134,8 @@
     history.forEach((h, i) => {
       const isLast = i === history.length - 1;
       ctx.beginPath();
-      ctx.arc(xp(i), yp(h.best1rm), isLast ? 3.5 : 2, 0, Math.PI * 2);
-      ctx.fillStyle = isLast ? '#F2C063' : 'rgba(242,192,99,0.45)';
+      ctx.arc(xp(i), yp(h.best1rm), isLast ? 4 : 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = isLast ? '#FF9440' : 'rgba(255,148,64,0.75)';
       ctx.fill();
     });
 
