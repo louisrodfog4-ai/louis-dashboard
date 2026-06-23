@@ -588,6 +588,30 @@ img, video, canvas, svg { max-width: 100%; }
   text-decoration: underline; padding: 6px;
 }
 
+/* ===== Exercise autocomplete dropdown ===== */
+#exSuggestions {
+  position: fixed; z-index: 300;
+  min-width: 220px;
+  background: #1c1c20;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.75), 0 2px 8px rgba(0,0,0,0.4);
+  max-height: 240px; overflow-y: auto;
+  display: none;
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+#exSuggestions.open { display: block; }
+.ex-sug-item {
+  padding: 11px 14px; font-size: 14px; font-weight: 500;
+  color: rgba(255,255,255,0.78); cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.ex-sug-item:last-child { border-bottom: none; }
+.ex-sug-item:hover, .ex-sug-item.ac-active {
+  background: rgba(255,255,255,0.08); color: #fff;
+}
+.ex-sug-item mark { background: transparent; color: #6EE7B7; font-weight: 700; }
+
 /* ----- Settings panel rows ----- */
 .po-set-section { margin-bottom: 22px; }
 .po-set-section h4 {
@@ -3465,6 +3489,231 @@ img, video, canvas, svg { max-width: 100%; }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pcFlushPushOnUnload();
   });
+
+  // ============================================================
+  // EXERCISE NAME AUTOCOMPLETE
+  // Dropdown is appended to <body> and positioned with fixed coords
+  // so it escapes the modal's overflow-y:auto and backdrop-filter.
+  // ============================================================
+  const EXERCISE_DB = [
+    // ── Chest ──
+    'Bench Press','Barbell Bench Press','Dumbbell Bench Press',
+    'Incline Bench Press','Incline Barbell Bench Press','Incline Dumbbell Press',
+    'Decline Bench Press','Decline Dumbbell Press',
+    'Cable Fly','Dumbbell Fly','Incline Dumbbell Fly','Decline Cable Fly',
+    'Pec Deck','Cable Crossover','Machine Chest Press','Machine Chest Fly',
+    'Push-up','Wide Push-up','Diamond Push-up','Archer Push-up',
+    'Chest Dip','Weighted Dip','Svend Press','Landmine Press',
+    // ── Back ──
+    'Deadlift','Conventional Deadlift','Romanian Deadlift','Stiff Leg Deadlift',
+    'Sumo Deadlift','Trap Bar Deadlift','Rack Pull','Block Pull',
+    'Barbell Row','Bent Over Row','Pendlay Row','Meadows Row','Yates Row',
+    'Dumbbell Row','Single-Arm Dumbbell Row','T-Bar Row',
+    'Cable Row','Seated Cable Row','Single-Arm Cable Row',
+    'Lat Pulldown','Wide Grip Lat Pulldown','Close Grip Lat Pulldown','Reverse Grip Lat Pulldown',
+    'Pull-up','Chin-up','Neutral Grip Pull-up','Weighted Pull-up','Band Pull-up',
+    'Inverted Row','TRX Row',
+    'Face Pull','Straight-Arm Pulldown','Pullover','Dumbbell Pullover',
+    'Back Extension','Hyperextension','45-Degree Back Extension',
+    'Good Morning','Jefferson Curl',
+    // ── Shoulders ──
+    'Overhead Press','Barbell Overhead Press','Seated Overhead Press',
+    'Dumbbell Overhead Press','Seated Dumbbell Press','Arnold Press',
+    'Military Press','Push Press','Z-Press',
+    'Lateral Raise','Dumbbell Lateral Raise','Cable Lateral Raise','Machine Lateral Raise',
+    'Front Raise','Dumbbell Front Raise','Cable Front Raise','Plate Front Raise',
+    'Rear Delt Fly','Dumbbell Rear Delt Fly','Cable Rear Delt Fly','Reverse Pec Deck',
+    'Upright Row','Barbell Upright Row','Cable Upright Row',
+    'Shrug','Barbell Shrug','Dumbbell Shrug','Cable Shrug','Trap Bar Shrug',
+    'Machine Shoulder Press','Smith Machine Overhead Press',
+    // ── Biceps ──
+    'Bicep Curl','Barbell Curl','EZ-Bar Curl','Dumbbell Curl',
+    'Alternating Dumbbell Curl','Seated Dumbbell Curl',
+    'Hammer Curl','Cross-Body Hammer Curl',
+    'Incline Dumbbell Curl','Incline Hammer Curl',
+    'Preacher Curl','EZ-Bar Preacher Curl','Dumbbell Preacher Curl',
+    'Concentration Curl','Cable Curl','Cable Hammer Curl',
+    'Machine Curl','High Cable Curl','Reverse Curl','Zottman Curl',
+    '21s','Spider Curl',
+    // ── Triceps ──
+    'Tricep Pushdown','Rope Pushdown','Bar Pushdown','V-Bar Pushdown',
+    'Overhead Tricep Extension','Dumbbell Overhead Tricep Extension',
+    'EZ-Bar Overhead Extension','Cable Overhead Tricep Extension',
+    'Skull Crusher','EZ-Bar Skull Crusher','Dumbbell Skull Crusher',
+    'Close Grip Bench Press','Close Grip Incline Press',
+    'Tricep Dip','Bench Dip','Machine Tricep Dip',
+    'Kickback','Dumbbell Kickback','Cable Kickback',
+    'Diamond Push-up','JM Press',
+    // ── Legs ──
+    'Back Squat','Barbell Back Squat','Low Bar Squat','High Bar Squat',
+    'Front Squat','Goblet Squat','Zercher Squat','Paused Squat',
+    'Box Squat','Anderson Squat','Safety Bar Squat',
+    'Bulgarian Split Squat','Split Squat','Reverse Lunge','Walking Lunge',
+    'Lateral Lunge','Sumo Squat','Hack Squat','Belt Squat',
+    'Leg Press','45-Degree Leg Press','Hack Squat Machine',
+    'Romanian Deadlift','Stiff Leg Deadlift','Single-Leg Romanian Deadlift',
+    'Leg Curl','Lying Leg Curl','Seated Leg Curl','Nordic Curl','Glute Ham Raise',
+    'Leg Extension','Single-Leg Extension',
+    'Step-up','Box Step-up','Lateral Step-up',
+    'Hip Thrust','Barbell Hip Thrust','Dumbbell Hip Thrust','Single-Leg Hip Thrust',
+    'Glute Bridge','Single-Leg Glute Bridge',
+    'Calf Raise','Standing Calf Raise','Seated Calf Raise','Donkey Calf Raise',
+    'Leg Abduction','Leg Adduction','Hip Abduction Machine',
+    'Box Jump','Broad Jump','Jump Squat',
+    'Sissy Squat','Leg Press Calf Raise',
+    // ── Core ──
+    'Plank','Side Plank','RKC Plank',
+    'Ab Wheel Rollout','Cable Crunch','Decline Crunch','Crunch',
+    'Hanging Leg Raise','Hanging Knee Raise','Toes to Bar',
+    'Hollow Body Hold','L-Sit','Dragon Flag','V-Up',
+    'Russian Twist','Bicycle Crunch','Toe Touch',
+    'Dead Bug','Bird Dog','Pallof Press','Anti-Rotation Press',
+    'Woodchop','Cable Woodchop','Side Bend',
+    'Landmine Twist','Suitcase Carry','Farmer\'s Walk','Yoke Carry',
+    // ── Olympic / Power ──
+    'Power Clean','Hang Power Clean','Hang Clean','Clean','Clean and Jerk',
+    'Snatch','Power Snatch','Hang Power Snatch',
+    'Push Jerk','Split Jerk','Push Press',
+    // ── Cardio & Full-Body ──
+    'Running','Cycling','Rowing','Jump Rope',
+    'Battle Ropes','Sled Push','Sled Pull',
+    'Burpee','Mountain Climber','Jumping Jack',
+    'Tire Flip','Keg Carry','Sandbag Carry',
+    'Assault Bike','SkiErg','Stair Climber'
+  ];
+
+  // Sort alphabetically for consistent ordering
+  EXERCISE_DB.sort((a, b) => a.localeCompare(b));
+
+  // Build the dropdown element once and append to body
+  const exSugEl = document.createElement('div');
+  exSugEl.id = 'exSuggestions';
+  document.body.appendChild(exSugEl);
+
+  let acIndex = -1; // keyboard-selected index
+
+  function acShow(items, query) {
+    if (!items.length) { acHide(); return; }
+    acIndex = -1;
+    const q = query.toLowerCase();
+    exSugEl.innerHTML = items.map((name, i) => {
+      // Highlight the matched portion
+      const lo = name.toLowerCase();
+      let html = '';
+      let cursor = 0;
+      // Find all occurrences of query words within the name
+      const qi = lo.indexOf(q);
+      if (qi >= 0) {
+        html = escHtml(name.slice(0, qi))
+             + '<mark>' + escHtml(name.slice(qi, qi + q.length)) + '</mark>'
+             + escHtml(name.slice(qi + q.length));
+      } else {
+        html = escHtml(name);
+      }
+      return '<div class="ex-sug-item" data-i="' + i + '">' + html + '</div>';
+    }).join('');
+    exSugEl.classList.add('open');
+    acPosition();
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function acHide() {
+    exSugEl.classList.remove('open');
+    acIndex = -1;
+  }
+
+  function acPosition() {
+    const rect = $('exName').getBoundingClientRect();
+    const dropH = Math.min(240, exSugEl.scrollHeight);
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const top = spaceBelow >= dropH ? rect.bottom + 4 : rect.top - dropH - 4;
+    exSugEl.style.top  = top + 'px';
+    exSugEl.style.left = rect.left + 'px';
+    exSugEl.style.width = rect.width + 'px';
+  }
+
+  function acFilter(query) {
+    if (query.length < 1) { acHide(); return; }
+    const q = query.toLowerCase().trim();
+    if (!q) { acHide(); return; }
+
+    // Split query into words for multi-word matching
+    const words = q.split(/\s+/);
+
+    // Score each exercise: 0 = no match, higher = better
+    const scored = EXERCISE_DB.map(name => {
+      const lo = name.toLowerCase();
+      // Exact prefix match on full name (highest priority)
+      if (lo.startsWith(q)) return { name, score: 3 };
+      // Any word in the exercise starts with query
+      if (lo.split(/[\s\-]+/).some(w => w.startsWith(q))) return { name, score: 2 };
+      // All query words appear somewhere in the name
+      if (words.every(w => lo.includes(w))) return { name, score: 1 };
+      return null;
+    }).filter(Boolean);
+
+    // Sort: score desc, then alphabetical
+    scored.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+
+    acShow(scored.slice(0, 10).map(x => x.name), q);
+  }
+
+  function acSelect(name) {
+    $('exName').value = name;
+    acHide();
+  }
+
+  // Input events
+  $('exName').addEventListener('input', e => acFilter(e.target.value));
+
+  $('exName').addEventListener('keydown', e => {
+    if (!exSugEl.classList.contains('open')) return;
+    const items = exSugEl.querySelectorAll('.ex-sug-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      acIndex = Math.min(acIndex + 1, items.length - 1);
+      items.forEach((el, i) => el.classList.toggle('ac-active', i === acIndex));
+      if (items[acIndex]) items[acIndex].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      acIndex = Math.max(acIndex - 1, 0);
+      items.forEach((el, i) => el.classList.toggle('ac-active', i === acIndex));
+      if (items[acIndex]) items[acIndex].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      if (acIndex >= 0 && items[acIndex]) {
+        e.preventDefault();
+        acSelect(items[acIndex].dataset.name || items[acIndex].textContent.replace(/<[^>]+>/g, ''));
+      }
+    } else if (e.key === 'Escape') {
+      acHide();
+    }
+  });
+
+  // Clicking a suggestion
+  exSugEl.addEventListener('mousedown', e => {
+    const item = e.target.closest('.ex-sug-item');
+    if (item) {
+      e.preventDefault(); // prevent blur before click
+      acSelect(item.textContent); // textContent strips <mark>
+    }
+  });
+
+  // Hide on blur
+  $('exName').addEventListener('blur', () => setTimeout(acHide, 120));
+
+  // Hide when modal closes
+  $('exModalCancel').addEventListener('click', acHide);
+  $('exModalBg').addEventListener('click', e => {
+    if (e.target === $('exModalBg')) acHide();
+  });
+
+  // Reposition on scroll/resize
+  window.addEventListener('scroll', acPosition, true);
+  window.addEventListener('resize', acPosition);
+
 })();
 </script>
 
