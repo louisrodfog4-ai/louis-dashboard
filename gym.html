@@ -123,7 +123,7 @@ html, body {
 .po-shell {
   width: 100%; max-width: min(720px, 100vw);
   margin: 0 auto;
-  padding: 24px 16px calc(40px + env(safe-area-inset-bottom));
+  padding: 24px 16px calc(96px + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
 /* Defeat the default `min-width: auto` on flex/grid items — without
@@ -676,7 +676,7 @@ img, video, canvas, svg { max-width: 100%; }
 
 @media (max-width: 480px) {
   /* === Mobile / iPhone polish === */
-  .po-shell { padding: 14px 10px calc(32px + env(safe-area-inset-bottom)); }
+  .po-shell { padding: 14px 10px calc(96px + env(safe-area-inset-bottom)); }
 
   /* Header — smaller title so the gear button never gets clipped */
   .po-title { font-size: 18px; letter-spacing: -0.01em; }
@@ -3464,6 +3464,28 @@ img, video, canvas, svg { max-width: 100%; }
   });
 })();
 </script>
+
+<nav class="tabbar" aria-label="Main navigation">
+  <div class="tabbar-inner">
+    <a href="index.html" class="tab">
+      <span class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </span>
+      Dashboard
+    </a>
+    <a href="gym.html" class="tab" aria-current="page">
+      <span class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </span>
+      Gym
+    </a>
+  </div>
+</nav>
 
 </body>
 </html>
