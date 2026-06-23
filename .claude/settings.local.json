@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"https://gist.github.com/louisrodfog4-ai/e21324fea836ce2dbbd67afb97c4aa9e\")"
+    ]
+  }
+}
