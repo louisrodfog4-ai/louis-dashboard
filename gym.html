@@ -592,6 +592,136 @@
     text-align: center;
   }
 
+  /* ── Exercise trend & history ── */
+  .ex-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.05);
+    margin: 14px 0;
+  }
+
+  .ex-stats-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 12px;
+  }
+
+  .ex-stat-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 0 14px;
+    border-right: 1px solid rgba(255,255,255,0.05);
+  }
+  .ex-stat-item:first-child { padding-left: 0; }
+  .ex-stat-item:last-child  { padding-right: 0; border-right: none; }
+
+  .ex-stat-label {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+
+  .ex-stat-value {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+  .ex-stat-value.highlight { color: var(--warning); }
+
+  .ex-trend-canvas {
+    display: block;
+    width: 100%;
+    height: 80px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+  }
+
+  .ex-history-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    user-select: none;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    padding: 2px 0;
+    transition: color 0.2s;
+  }
+  .ex-history-toggle:hover { color: var(--text-secondary); }
+  .ex-history-toggle::before { content: ''; flex: 0 0 10px; height: 1px; background: currentColor; opacity: 0.45; }
+  .ex-history-toggle::after  { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.06), transparent); }
+
+  .ex-history-caret {
+    font-size: 9px;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    order: -1;
+    margin-right: 0;
+  }
+  .ex-history-toggle.open .ex-history-caret { transform: rotate(180deg); }
+
+  .ex-history-list {
+    margin-top: 8px;
+    display: none;
+  }
+  .ex-history-list.open { display: block; }
+
+  .ex-history-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .ex-history-row:last-child { border-bottom: none; }
+
+  .ex-history-date {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    min-width: 52px;
+  }
+
+  .ex-history-sets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .ex-history-chip {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+    background: rgba(255,255,255,0.04);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+
+  .ex-history-1rm {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
   /* Nav from index */
   .nav-bar {
     display: flex;
@@ -816,6 +946,116 @@
            }) === Object.keys(getSessions()).sort().reverse()[0];
   }
 
+  // ── Estimated 1RM (Epley) ────────────────────────────────────────────────
+  function epley1RM(weight, reps) {
+    if (reps === 1) return weight;
+    return Math.round(weight * (1 + reps / 30) * 10) / 10;
+  }
+
+  // ── Exercise history ──────────────────────────────────────────────────────
+  function getExerciseHistory(name, limit) {
+    const sessions = getSessions();
+    const history = [];
+    const dates = Object.keys(sessions).sort();
+    for (const date of dates) {
+      const sets = sessions[date].exercises[name];
+      if (!sets || sets.length === 0) continue;
+      const best1rm = Math.max(...sets.map(s => epley1RM(s.weight, s.reps)));
+      const bestSet = sets.reduce((best, s) =>
+        s.weight > best.weight || (s.weight === best.weight && s.reps > best.reps) ? s : best, sets[0]);
+      history.push({ date, sets, best1rm, bestSet });
+    }
+    return limit ? history.slice(-limit) : history;
+  }
+
+  // ── Draw exercise trend chart ─────────────────────────────────────────────
+  function drawExerciseTrendChart(canvas, history) {
+    const dpr = window.devicePixelRatio || 1;
+    const W   = canvas.parentElement ? canvas.parentElement.clientWidth : 300;
+    const H   = 80;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    if (history.length < 2) {
+      ctx.fillStyle = 'rgba(118,116,110,0.5)';
+      ctx.font = '11px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(
+        history.length === 0 ? 'Log this exercise to track progress' : 'One more session to show trend',
+        W / 2, H / 2
+      );
+      return;
+    }
+
+    const pad = { top: 8, right: 8, bottom: 18, left: 8 };
+    const cW = W - pad.left - pad.right;
+    const cH = H - pad.top - pad.bottom;
+    const values = history.map(h => h.best1rm);
+    const minV = Math.min(...values);
+    const maxV = Math.max(...values);
+    const spread = maxV - minV || 5;
+    const minY = minV - spread * 0.15;
+    const maxY = maxV + spread * 0.15;
+    const vRange = maxY - minY;
+
+    const xp = i => pad.left + (i / (history.length - 1)) * cW;
+    const yp = v => pad.top + (1 - (v - minY) / vRange) * cH;
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    [0, 0.5, 1].forEach(t => {
+      const y = pad.top + t * cH;
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
+    });
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+    grad.addColorStop(0, 'rgba(242,192,99,0.18)');
+    grad.addColorStop(1, 'rgba(242,192,99,0)');
+    ctx.beginPath();
+    ctx.moveTo(xp(0), yp(values[0]));
+    for (let i = 1; i < history.length; i++) ctx.lineTo(xp(i), yp(values[i]));
+    ctx.lineTo(xp(history.length - 1), pad.top + cH);
+    ctx.lineTo(xp(0), pad.top + cH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(xp(0), yp(values[0]));
+    for (let i = 1; i < history.length; i++) ctx.lineTo(xp(i), yp(values[i]));
+    ctx.strokeStyle = '#F2C063';
+    ctx.lineWidth = 1.5;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // Dots
+    history.forEach((h, i) => {
+      const isLast = i === history.length - 1;
+      ctx.beginPath();
+      ctx.arc(xp(i), yp(h.best1rm), isLast ? 3.5 : 2, 0, Math.PI * 2);
+      ctx.fillStyle = isLast ? '#F2C063' : 'rgba(242,192,99,0.45)';
+      ctx.fill();
+    });
+
+    // Date labels: first and last
+    ctx.fillStyle = 'rgba(118,116,110,0.65)';
+    ctx.font = '9px ui-monospace, monospace';
+    ctx.textBaseline = 'top';
+    const fmt = ds => new Date(ds + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    ctx.textAlign = 'left';
+    ctx.fillText(fmt(history[0].date), pad.left, H - pad.bottom + 4);
+    ctx.textAlign = 'right';
+    ctx.fillText(fmt(history[history.length - 1].date), pad.left + cW, H - pad.bottom + 4);
+  }
+
   // ── Exercise selector population ─────────────────────────────────────────
   function populateExerciseSel() {
     const sel = document.getElementById('exerciseSel');
@@ -970,7 +1210,112 @@
       addSetRow.appendChild(logBtn);
       block.appendChild(addSetRow);
 
+      // ── Stats + trend + history ────────────────────────────────────────
+      const allHistory = getExerciseHistory(name);
+      // Compute all-time bests (history + today's unsaved sets)
+      let allTimeBest1RM = 0;
+      let allTimeBestSet = null;
+      const allSets = [...allHistory.flatMap(h => h.sets), ...sets];
+      allSets.forEach(s => {
+        const rm = epley1RM(s.weight, s.reps);
+        if (rm > allTimeBest1RM) allTimeBest1RM = rm;
+        if (!allTimeBestSet || s.weight > allTimeBestSet.weight ||
+            (s.weight === allTimeBestSet.weight && s.reps > allTimeBestSet.reps)) {
+          allTimeBestSet = s;
+        }
+      });
+
+      const divider = document.createElement('div');
+      divider.className = 'ex-divider';
+      block.appendChild(divider);
+
+      // Stats row
+      const statsRow = document.createElement('div');
+      statsRow.className = 'ex-stats-row';
+      [
+        { label: 'Est. 1RM',  value: allTimeBest1RM > 0 ? allTimeBest1RM.toFixed(1) + 'kg' : '—', hi: true },
+        { label: 'Best Set',  value: allTimeBestSet ? allTimeBestSet.weight + 'kg × ' + allTimeBestSet.reps : '—' },
+        { label: 'Sessions',  value: allHistory.length + (sets.length > 0 && !allHistory.find(h => h.date === todayStr) ? 1 : 0) }
+      ].forEach(({ label, value, hi }) => {
+        const item = document.createElement('div');
+        item.className = 'ex-stat-item';
+        const lbl = document.createElement('div');
+        lbl.className = 'ex-stat-label';
+        lbl.textContent = label;
+        const val = document.createElement('div');
+        val.className = 'ex-stat-value' + (hi ? ' highlight' : '');
+        val.textContent = value;
+        item.appendChild(lbl);
+        item.appendChild(val);
+        statsRow.appendChild(item);
+      });
+      block.appendChild(statsRow);
+
+      // Trend canvas (drawn after append via RAF)
+      const trendCanvas = document.createElement('canvas');
+      trendCanvas.className = 'ex-trend-canvas';
+      trendCanvas.dataset.exercise = name;
+      block.appendChild(trendCanvas);
+
+      // History toggle + list (newest first)
+      const historyDesc = [...allHistory].reverse();
+      if (historyDesc.length > 0) {
+        const toggle = document.createElement('button');
+        toggle.className = 'ex-history-toggle';
+        const caret = document.createElement('span');
+        caret.className = 'ex-history-caret';
+        caret.textContent = '▾';
+        toggle.appendChild(caret);
+        toggle.appendChild(document.createTextNode(' History'));
+
+        const histList = document.createElement('div');
+        histList.className = 'ex-history-list';
+
+        historyDesc.forEach(({ date, sets: hSets, best1rm }) => {
+          const row = document.createElement('div');
+          row.className = 'ex-history-row';
+
+          const dateEl = document.createElement('div');
+          dateEl.className = 'ex-history-date';
+          dateEl.textContent = new Date(date + 'T00:00:00')
+            .toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+          const setsEl = document.createElement('div');
+          setsEl.className = 'ex-history-sets';
+          hSets.forEach(s => {
+            const chip = document.createElement('span');
+            chip.className = 'ex-history-chip';
+            chip.textContent = s.weight + 'kg×' + s.reps;
+            setsEl.appendChild(chip);
+          });
+
+          const rmEl = document.createElement('div');
+          rmEl.className = 'ex-history-1rm';
+          rmEl.textContent = best1rm.toFixed(1) + ' 1RM';
+
+          row.appendChild(dateEl);
+          row.appendChild(setsEl);
+          row.appendChild(rmEl);
+          histList.appendChild(row);
+        });
+
+        toggle.addEventListener('click', () => {
+          const open = histList.classList.toggle('open');
+          toggle.classList.toggle('open', open);
+        });
+
+        block.appendChild(toggle);
+        block.appendChild(histList);
+      }
+
       container.appendChild(block);
+    });
+
+    // Draw trend charts once blocks are in DOM
+    requestAnimationFrame(() => {
+      container.querySelectorAll('.ex-trend-canvas').forEach(c => {
+        drawExerciseTrendChart(c, getExerciseHistory(c.dataset.exercise, 10));
+      });
     });
 
     populateExerciseSel();
@@ -1271,7 +1616,12 @@
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(drawWeightChart, 150);
+    resizeTimer = setTimeout(() => {
+      drawWeightChart();
+      document.querySelectorAll('.ex-trend-canvas').forEach(c => {
+        drawExerciseTrendChart(c, getExerciseHistory(c.dataset.exercise, 10));
+      });
+    }, 150);
   });
 
   // ── Init ──────────────────────────────────────────────────────────────────
