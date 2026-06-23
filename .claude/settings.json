@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"/Users/louis.fogarty/Desktop/Louis dashboard/\" && echo \"---\" && ls ~/Desktop/ | grep -i netlify)",
+      "Read(//Users/louis.fogarty/Desktop/**)"
+    ]
+  }
+}
