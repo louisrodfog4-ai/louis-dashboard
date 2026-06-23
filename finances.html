@@ -1,0 +1,2650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Finances</title>
+<script src="topbar.js" defer></script>
+<style>
+:root {
+  --bg: #0A0A0B;
+  --bg-deep: #050506;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-secondary: rgba(255, 255, 255, 0.035);
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: transparent;
+  --glass-border-strong: transparent;
+  --glass-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --text-quaternary: #4D4B47;
+  --border: transparent;
+  --border-soft: transparent;
+  --accent: #E07658;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger: #FF6B6B;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+
+/* Backdrop — black with subtle warm + cool washes */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -10%;
+  z-index: -2;
+  background:
+    radial-gradient(60% 45% at 82% 14%, rgba(224, 118, 88, 0.16) 0%, transparent 55%),
+    radial-gradient(55% 45% at 18% 90%, rgba(180, 180, 200, 0.06) 0%, transparent 55%),
+    linear-gradient(180deg, #0A0A0B 0%, #050506 100%);
+  filter: blur(40px) saturate(1.05);
+  pointer-events: none;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.shell {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+
+/* ===== Back to dashboard ===== */
+.fin-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px 8px 10px;
+  margin: 0 0 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.fin-back-btn:hover, .fin-back-btn:active {
+  background: rgba(255,255,255,0.07);
+  color: var(--text-primary);
+}
+.fin-back-btn svg { display: block; }
+
+/* ===== Bottom tab bar ===== */
+.bottom-tabs {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px max(12px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-right));
+  background: linear-gradient(180deg, transparent, rgba(5,5,6,0.92) 30%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.bottom-tabs::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 12px; right: 12px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+  pointer-events: none;
+}
+.bot-tab {
+  flex: 1; max-width: 140px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-tertiary);
+  padding: 9px 14px 8px;
+  border-radius: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.bot-tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.025); }
+.bot-tab.active {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.10);
+}
+.bot-tab-icon { font-size: 18px; line-height: 1; }
+.bot-tab-label {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+/* Sections: hide non-active when bottom tabs are in use */
+.section[hidden] { display: none !important; }
+
+/* Hide scrollbars everywhere */
+html, body { scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
+
+/* Section title with reorder controls */
+.section { margin-bottom: 18px; }
+.section-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-title::before {
+  content: '';
+  width: 18px;
+  height: 1px;
+  background: var(--text-tertiary);
+  opacity: 0.6;
+}
+.section-title-text { display: inline-flex; align-items: center; gap: 8px; }
+.section-title-text::before {
+  content: '⚡';
+  font-size: 14px;
+  color: var(--text-tertiary);
+  opacity: 0.5;
+}
+.section-reorder { display: inline-flex; gap: 6px; opacity: 0.5; }
+.section-reorder button {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 4px;
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.section-reorder button:hover { color: var(--text-primary); }
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.08), transparent);
+}
+
+/* Card */
+.card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 10px;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 14px; right: 14px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+  pointer-events: none;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+/* Tag pills */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  padding: 3px 9px 3px 8px;
+  border-radius: 999px;
+  margin: 2px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+.tag::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.30);
+}
+.tag-green::before { background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.55); }
+.tag-green { background: rgba(107, 227, 164, 0.10); color: #8EE9B7; }
+.pill-group { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+
+/* Empty state */
+.empty-state {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 16px 0;
+  font-family: var(--font-mono);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.empty-state::before {
+  content: '';
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text-quaternary);
+  flex-shrink: 0;
+}
+
+/* Quick-add composer */
+.quick-add {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+  margin-top: 10px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.30);
+  border-radius: 12px;
+  border: none;
+}
+.quick-add input,
+.quick-add input[type="text"],
+.quick-add input[type="number"],
+.quick-add input[type="date"],
+.quick-add select {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  padding: 9px 12px;
+  font-family: inherit;
+  font-size: 14px;
+}
+.quick-add input::placeholder { color: var(--text-tertiary); }
+.quick-add-btn {
+  padding: 0 14px;
+  background: rgba(255,255,255,0.06);
+  border: none;
+  color: var(--text-secondary);
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.quick-add-btn:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+.quick-add-btn:active { transform: scale(0.96); }
+
+/* Custom list rows */
+.custom-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: rgba(255,255,255,0.025);
+  border: none;
+  border-radius: 10px;
+  margin-bottom: 5px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.custom-item:hover { background: rgba(255,255,255,0.05); }
+.custom-item .item-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.30);
+  flex-shrink: 0;
+}
+.custom-item span { flex: 1; word-break: break-word; }
+.custom-item .delete-x {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  opacity: 0.5;
+}
+.custom-item:hover .delete-x { opacity: 1; }
+.custom-item .delete-x:hover { color: #FF8A8A; background: rgba(255,138,138,0.10); }
+
+/* Inline label eyebrow */
+.label {
+  font-size: 9.5px;
+  color: var(--text-tertiary);
+  margin-bottom: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-family: var(--font-mono);
+}
+
+/* ===== Net Worth ===== */
+.nw-list { font-size: 13px; }
+.nw-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0; gap: 8px; min-width: 0;
+}
+.nw-name {
+  color: var(--text-primary); flex: 1 1 auto; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.nw-amt {
+  font-weight: 600; color: var(--text-primary); flex-shrink: 0;
+  font-variant-numeric: tabular-nums; font-family: var(--font-mono);
+  font-size: 12px; white-space: nowrap;
+}
+.nw-name-edit, .nw-amt-edit {
+  cursor: pointer; border-radius: 4px;
+  padding: 2px 4px; margin: -2px -4px;
+}
+.nw-name-edit:hover, .nw-amt-edit:hover { background: rgba(255, 255, 255, 0.06); }
+.nw-del {
+  background: none; border: none;
+  color: var(--text-tertiary); cursor: pointer;
+  font-size: 14px; padding: 0 4px; line-height: 1;
+  flex-shrink: 0;
+}
+.nw-del:hover { color: var(--danger); }
+
+.nw-subcard {
+  background: rgba(255,255,255,0.025) !important;
+  border: none;
+  margin-bottom: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.nw-subcard .quick-add {
+  border-top: none !important;
+  display: grid;
+  grid-template-columns: 1fr 100px auto;
+  gap: 6px;
+  align-items: stretch;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.nw-subcard .quick-add input {
+  min-width: 0; width: 100%; max-width: none !important;
+}
+#netWorthTotal + * + .card-grid,
+.section .card .card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 720px) {
+  .section .card .card-grid { grid-template-columns: 1fr; }
+}
+
+/* Stock-style net-worth chart */
+.nw-chart-wrap {
+  margin: 14px 0 18px;
+  padding: 14px 16px 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border: none;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.nw-chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+.nw-chart-label { color: var(--text-tertiary); }
+.nw-chart-delta { font-variant-numeric: tabular-nums; color: var(--text-tertiary); }
+.nw-chart-delta.up   { color: #6BE3A4; }
+.nw-chart-delta.down { color: #FF8A8A; }
+.nw-chart-svg {
+  display: block;
+  width: 100%;
+  height: 200px;
+  color: var(--text-tertiary);
+  overflow: visible;
+  transition: color 0.4s ease;
+}
+.nw-chart-grid {
+  stroke: rgba(255,255,255,0.05);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  vector-effect: non-scaling-stroke;
+}
+.nw-chart-empty {
+  position: absolute;
+  inset: 28px 16px 12px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-align: center;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.nw-chart-wrap.has-data .nw-chart-empty { display: none; }
+
+/* Stats overlay sitting at the bottom of the chart card */
+.nw-chart-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+@media (max-width: 720px) {
+  .nw-chart-stats { grid-template-columns: repeat(2, 1fr); }
+}
+.nw-stat {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 4px 6px;
+}
+.nw-stat-label {
+  font-size: 9px; letter-spacing: 0.16em; font-weight: 800;
+  text-transform: uppercase; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+.nw-stat-val {
+  font-size: 13px; font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Two-column overview row: line chart + donut */
+.nw-overview-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 12px;
+  margin: 14px 0 18px;
+  align-items: stretch;
+}
+@media (max-width: 720px) {
+  .nw-overview-grid { grid-template-columns: 1fr; }
+}
+.nw-overview-grid .nw-chart-wrap { margin: 0; }
+.nw-donut-wrap {
+  position: relative;
+  padding: 14px 16px 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.nw-donut-stage {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 4px auto 6px;
+}
+.nw-donut-svg {
+  width: 140px; height: 140px;
+  transform: rotate(-90deg);
+  display: block;
+}
+.nw-donut-svg path {
+  transition: opacity 0.18s, filter 0.25s;
+}
+/* Soft fade glow on the WHOLE donut, not per-path — much subtler, no outline */
+.nw-donut-stage::after {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center,
+    rgba(110,231,183,0.18) 0%,
+    rgba(110,231,183,0.08) 40%,
+    transparent 70%);
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: -1;
+}
+.nw-donut-svg:hover path { opacity: 0.5; }
+.nw-donut-svg path:hover { opacity: 1; }
+.nw-donut-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none;
+  text-align: center;
+}
+.nw-donut-num {
+  font-size: 16px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.nw-donut-sub {
+  font-size: 9px; letter-spacing: 0.18em; font-weight: 700;
+  text-transform: uppercase; color: var(--text-tertiary);
+  margin-top: 4px;
+}
+.nw-donut-empty {
+  text-align: center;
+  font-size: 11px; color: var(--text-tertiary);
+  padding: 8px 0;
+  font-style: italic;
+}
+.nw-donut-empty.hidden { display: none; }
+.nw-donut-legend {
+  margin-top: 8px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.nw-leg {
+  display: grid; grid-template-columns: 8px 1fr auto;
+  gap: 8px; align-items: center;
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.nw-leg-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+.nw-leg-name { color: var(--text-secondary); }
+.nw-leg-pct {
+  color: var(--text-primary); font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+/* ===== Activity log ===== */
+.nw-activity {
+  margin-top: 14px;
+  padding: 14px 16px 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 12px;
+}
+.nw-activity-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+.nw-activity-list {
+  display: flex; flex-direction: column; gap: 6px;
+  /* Show ~3 rows then scroll. Each row is ~44px + 6px gap. */
+  max-height: 156px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+/* Subtle scroll affordance — shows there's more below */
+.nw-activity-list::-webkit-scrollbar { width: 4px !important; display: block !important; }
+.nw-activity-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 2px; }
+.nw-activity-list::-webkit-scrollbar-track { background: transparent; }
+.nw-activity-row {
+  display: grid; grid-template-columns: 4px 1fr auto auto;
+  gap: 10px; align-items: center;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.025);
+  border-radius: 8px;
+  font-size: 12.5px;
+  transition: background 0.15s;
+}
+.nw-activity-row:hover { background: rgba(255,255,255,0.05); }
+.nw-activity-bar {
+  width: 4px; height: 24px; border-radius: 2px;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+.nw-activity-info {
+  min-width: 0;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.nw-activity-name {
+  color: var(--text-primary); font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 13px;
+}
+.nw-activity-meta {
+  font-size: 10.5px; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.nw-activity-amt {
+  font-size: 13px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.nw-activity-amt.up   { color: #6BE3A4; }
+.nw-activity-amt.down { color: #FF8A8A; }
+.nw-activity-date {
+  font-size: 10.5px; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.nw-activity-empty {
+  text-align: center; padding: 12px 0;
+  color: var(--text-tertiary); font-size: 11px;
+  font-style: italic;
+}
+.nw-activity-empty.hidden { display: none; }
+.nw-activity-list.hidden { display: none; }
+
+/* ============================================================
+   ORDERS — full-spec form (name, cost, ccy, from-category, date)
+   ============================================================ */
+.ord-add-card {
+  background: rgba(255,255,255,0.025) !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
+}
+.ord-add-eyebrow {
+  font-size: 10px; letter-spacing: 0.18em; font-weight: 800;
+  text-transform: uppercase; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  margin-bottom: 10px;
+}
+.ord-add-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 0.8fr 1.1fr 1.1fr auto;
+  gap: 6px; align-items: stretch;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.30);
+  border-radius: 12px;
+}
+@media (max-width: 720px) {
+  .ord-add-grid { grid-template-columns: 1fr 1fr; }
+  .ord-add-grid .ord-input-name { grid-column: 1 / -1; }
+  .ord-add-grid .ord-add-btn    { grid-column: 1 / -1; }
+}
+.ord-input {
+  background: transparent; border: none; outline: none;
+  color: var(--text-primary);
+  font-family: inherit; font-size: 13px;
+  padding: 9px 10px;
+  min-width: 0;
+  -moz-appearance: textfield;
+}
+.ord-input::-webkit-outer-spin-button,
+.ord-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.ord-input::placeholder { color: var(--text-tertiary); }
+.ord-input-cost { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.ord-input-ccy, .ord-input-from {
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  cursor: pointer; font-weight: 600;
+  appearance: none; -webkit-appearance: none;
+  text-align: center;
+}
+.ord-input-from { font-size: 12px; }
+.ord-add-btn {
+  padding: 0 14px;
+  background: linear-gradient(180deg, #6EE7B7, #4ED4A0);
+  color: #04201A; border: none;
+  border-radius: 9px;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(110,231,183,0.22);
+  transition: transform 0.12s, box-shadow 0.18s;
+}
+.ord-add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(110,231,183,0.36); }
+.ord-add-btn:active { transform: scale(0.97); }
+.ord-add-preview {
+  margin-top: 10px; padding: 8px 12px;
+  background: rgba(110,231,183,0.06);
+  border: 1px solid rgba(110,231,183,0.14);
+  border-radius: 8px;
+  font-size: 12px; color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+.ord-add-preview.warn { background: rgba(242,192,99,0.08); border-color: rgba(242,192,99,0.20); color: #F2C063; }
+.ord-add-preview.bad  { background: rgba(255,138,138,0.08); border-color: rgba(255,138,138,0.20); color: #FF8A8A; }
+
+.ord-section-h {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin: 18px 4px 8px;
+}
+.ord-section-label {
+  font-size: 10px; letter-spacing: 0.18em; font-weight: 800;
+  text-transform: uppercase; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+.ord-section-count {
+  font-size: 11px; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ord-card {
+  background: rgba(255,255,255,0.025);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--text-tertiary);
+  transition: background 0.15s;
+}
+.ord-card:hover { background: rgba(255,255,255,0.045); }
+.ord-card.cat-bank   { border-left-color: #7DD3FC; }
+.ord-card.cat-stocks { border-left-color: #6EE7B7; }
+.ord-card.cat-crypto { border-left-color: #FBBF24; }
+.ord-card.cat-other  { border-left-color: #B794F4; }
+.ord-card-h {
+  display: grid; grid-template-columns: 1fr auto auto;
+  gap: 12px; align-items: baseline;
+}
+.ord-card-name {
+  font-size: 15px; font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ord-card-amt {
+  font-size: 17px; font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.ord-card-x {
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-tertiary);
+  cursor: pointer; font-size: 14px;
+  padding: 4px 9px; border-radius: 6px;
+  font-family: inherit; line-height: 1;
+}
+.ord-card-x:hover { color: #FF8A8A; }
+.ord-card-meta {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-top: 8px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+}
+.ord-meta-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.ord-meta-pill.from { color: var(--text-secondary); }
+.ord-meta-pill.pct.good { color: #6EE7B7; background: rgba(110,231,183,0.10); }
+.ord-meta-pill.pct.warn { color: #F2C063; background: rgba(242,192,99,0.10); }
+.ord-meta-pill.pct.bad  { color: #FF8A8A; background: rgba(255,138,138,0.10); }
+.ord-meta-pill.date { color: var(--text-secondary); }
+.ord-meta-pill.date.soon { color: #F2C063; background: rgba(242,192,99,0.10); }
+.ord-meta-pill.date.today { color: #6EE7B7; background: rgba(110,231,183,0.10); }
+.ord-meta-pill.date.past { color: #FF8A8A; background: rgba(255,138,138,0.10); }
+
+.ord-empty-card {
+  text-align: center; padding: 32px 20px;
+  background: rgba(255,255,255,0.025);
+  border-radius: 14px;
+  border: 1px dashed rgba(255,255,255,0.08);
+}
+.ord-empty-card.hidden { display: none; }
+.ord-empty-icon {
+  font-size: 36px; margin-bottom: 8px;
+  opacity: 0.6;
+}
+.ord-empty-title {
+  font-size: 15px; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 4px;
+}
+.ord-empty-sub {
+  font-size: 12px; color: var(--text-tertiary);
+  line-height: 1.5; max-width: 360px; margin: 0 auto;
+}
+
+/* ============================================================
+   WISHLIST — premium polished UI
+   ============================================================ */
+/* Hero card */
+.wish-hero {
+  background: linear-gradient(135deg, rgba(183,148,244,0.08), rgba(110,231,183,0.04)) !important;
+  border: 1px solid rgba(183,148,244,0.18) !important;
+  position: relative; overflow: hidden;
+}
+.wish-hero::after {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 160px; height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(183,148,244,0.18), transparent 70%);
+  filter: blur(20px);
+  pointer-events: none;
+}
+.wish-hero-top {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 16px; margin-bottom: 14px; position: relative;
+}
+.wish-hero-eyebrow {
+  font-size: 10px; letter-spacing: 0.20em; font-weight: 700;
+  text-transform: uppercase; color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+.wish-hero-num {
+  font-size: 32px; font-weight: 700; letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums; line-height: 1;
+  color: var(--text-primary);
+}
+.wish-hero-pct-wrap { text-align: right; }
+.wish-hero-pct-label {
+  font-size: 10px; letter-spacing: 0.16em; font-weight: 700;
+  text-transform: uppercase; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  margin-bottom: 4px;
+}
+.wish-hero-pct-num {
+  font-size: 22px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  color: #B794F4;
+}
+.wish-hero-pct-num.warn { color: #F2C063; }
+.wish-hero-pct-num.bad  { color: #FF8A8A; }
+.wish-hero-bar {
+  height: 6px; border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden; position: relative;
+}
+.wish-hero-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, #B794F4, #6EE7B7);
+  box-shadow: 0 0 8px rgba(183,148,244,0.5);
+  transition: width 0.4s ease;
+}
+.wish-hero-foot {
+  font-size: 11.5px; color: var(--text-tertiary);
+  margin-top: 10px; position: relative;
+  font-family: var(--font-mono);
+}
+
+/* Add card */
+.wish-add-card {
+  background: rgba(255,255,255,0.025) !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
+}
+.wish-add-eyebrow {
+  font-size: 10px; letter-spacing: 0.18em; font-weight: 800;
+  text-transform: uppercase; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  margin-bottom: 10px;
+}
+.wish-add-row {
+  display: flex; gap: 6px; align-items: stretch;
+  flex-wrap: wrap;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.30);
+  border-radius: 12px;
+}
+.wish-input {
+  background: transparent; border: none; outline: none;
+  color: var(--text-primary);
+  font-family: inherit; font-size: 14px;
+  padding: 9px 12px;
+  -moz-appearance: textfield;
+}
+.wish-input::-webkit-outer-spin-button,
+.wish-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.wish-input::placeholder { color: var(--text-tertiary); }
+.wish-input-name { flex: 2; min-width: 160px; }
+.wish-input-amt  { flex: 1; min-width: 80px; max-width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
+.wish-input-ccy {
+  flex: 0 1 80px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 9px;
+  color: var(--text-primary);
+  font-family: inherit; font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none; -webkit-appearance: none;
+  text-align: center;
+}
+.wish-add-btn {
+  padding: 0 18px;
+  background: linear-gradient(180deg, #B794F4, #9F7DD4);
+  color: #ffffff; border: none;
+  border-radius: 9px;
+  font-family: inherit; font-size: 14px; font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(183,148,244,0.30);
+  transition: transform 0.12s, box-shadow 0.18s;
+}
+.wish-add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(183,148,244,0.45); }
+.wish-add-btn:active { transform: scale(0.97); }
+
+.wish-section-h {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin: 18px 4px 8px;
+}
+.wish-section-label {
+  font-size: 10px; letter-spacing: 0.18em; font-weight: 800;
+  text-transform: uppercase; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+.wish-section-count {
+  font-size: 11px; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.wish-empty-card {
+  text-align: center; padding: 32px 20px;
+  background: rgba(255,255,255,0.025);
+  border-radius: 14px;
+  border: 1px dashed rgba(255,255,255,0.08);
+}
+.wish-empty-card.hidden { display: none; }
+.wish-empty-icon {
+  font-size: 36px; margin-bottom: 8px;
+  opacity: 0.6;
+}
+.wish-empty-title {
+  font-size: 15px; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 4px;
+}
+.wish-empty-sub {
+  font-size: 12px; color: var(--text-tertiary);
+  line-height: 1.5; max-width: 320px; margin: 0 auto;
+}
+
+/* ===== Wishlist rows ===== */
+.wish-row {
+  background: rgba(255,255,255,0.025);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.wish-row-h {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+}
+.wish-row-info { min-width: 0; }
+.wish-row-name {
+  font-weight: 600; color: var(--text-primary);
+  font-size: 14px;
+}
+.wish-row-meta {
+  font-size: 11px; color: var(--text-tertiary);
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}
+.wish-row-amt-wrap { text-align: right; line-height: 1.1; }
+.wish-row-amt {
+  font-size: 17px; font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+.wish-row-pct {
+  font-size: 10.5px; font-weight: 700;
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.wish-row-pct.good { color: #6BE3A4; }
+.wish-row-pct.warn { color: #F2C063; }
+.wish-row-pct.bad  { color: #FF8A8A; }
+.wish-row-pct.flat { color: var(--text-tertiary); }
+.wish-row-x {
+  background: transparent; border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text-tertiary);
+  cursor: pointer; font-size: 14px;
+  padding: 4px 8px; border-radius: 6px;
+  font-family: inherit; line-height: 1;
+}
+.wish-row-x:hover { color: #FF8A8A; }
+.wish-row-bar {
+  height: 5px; border-radius: 3px;
+  background: rgba(255,255,255,0.04);
+  margin-top: 10px;
+  overflow: hidden;
+}
+.wish-row-bar-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.wish-row-bar-fill.good { background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.5); }
+.wish-row-bar-fill.warn { background: #F2C063; box-shadow: 0 0 6px rgba(242,192,99,0.5); }
+.wish-row-bar-fill.bad  { background: #FF8A8A; box-shadow: 0 0 6px rgba(255,138,138,0.5); }
+.wish-row-bar-fill.flat { background: rgba(255,255,255,0.20); }
+
+/* ============================================================
+   FINANCE TICKER — rotating Nasdaq-style subscription renewal
+   header at the very top of the finances section.
+   ============================================================ */
+.finance-ticker {
+  display: flex; align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  background: linear-gradient(90deg, rgba(110,231,183,0.06), rgba(125,211,252,0.04));
+  border: 1px solid rgba(110,231,183,0.14);
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  overflow: hidden;
+  position: relative;
+  min-height: 38px;
+  transition: background 0.4s, border-color 0.4s;
+}
+.finance-ticker.hidden { display: none; }
+.finance-ticker.urgent {
+  background: linear-gradient(90deg, rgba(255,138,138,0.10), rgba(255,138,138,0.04));
+  border-color: rgba(255,138,138,0.30);
+  animation: tickerPulse 1.2s ease-in-out infinite;
+}
+@keyframes tickerPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,138,138,0.0); }
+  50%      { box-shadow: 0 0 14px 0 rgba(255,138,138,0.30); }
+}
+.ticker-tag {
+  font-size: 9.5px; letter-spacing: 0.18em; font-weight: 800;
+  text-transform: uppercase; color: var(--text-tertiary);
+  padding: 3px 8px;
+  background: rgba(0,0,0,0.30);
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.finance-ticker.urgent .ticker-tag { color: #FF8A8A; background: rgba(255,138,138,0.10); }
+.ticker-stream {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  height: 18px;
+}
+.ticker-item {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; gap: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.35s, transform 0.35s;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+.ticker-item.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+.ticker-item-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ticker-item-amt {
+  font-weight: 700;
+  color: #6BE3A4;
+}
+.finance-ticker.urgent .ticker-item-amt { color: #FF8A8A; }
+.ticker-item-days {
+  color: var(--text-tertiary);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.finance-ticker.urgent .ticker-item-days {
+  color: #FF8A8A;
+  font-weight: 700;
+}
+.ticker-dots {
+  display: flex; gap: 4px;
+  flex-shrink: 0;
+}
+.ticker-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  transition: background 0.2s;
+}
+.ticker-dot.active { background: #6BE3A4; }
+.finance-ticker.urgent .ticker-dot.active { background: #FF8A8A; }
+
+/* ============================================================
+   DEDUCT-FROM-NW BUTTON & CHOOSER (in order cards)
+   ============================================================ */
+.ord-card-foot {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255,255,255,0.06);
+  display: flex; flex-wrap: wrap; gap: 8px;
+  align-items: center;
+}
+.ord-deduct-btn {
+  background: linear-gradient(180deg, rgba(125,211,252,0.18), rgba(125,211,252,0.08));
+  border: 1px solid rgba(125,211,252,0.30);
+  color: #BFE3F8;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 7px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.12s, background 0.18s, box-shadow 0.18s;
+}
+.ord-deduct-btn:hover {
+  background: linear-gradient(180deg, rgba(125,211,252,0.28), rgba(125,211,252,0.12));
+  box-shadow: 0 4px 14px rgba(125,211,252,0.22);
+  transform: translateY(-1px);
+}
+.ord-deduct-btn:active { transform: scale(0.97); }
+.ord-deducted-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6EE7B7;
+  background: rgba(110,231,183,0.10);
+  border: 1px solid rgba(110,231,183,0.20);
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+.ord-deducted-pill::before {
+  content: '✓';
+  font-size: 12px;
+}
+.ord-deduct-undo {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text-tertiary);
+  font-family: inherit;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ord-deduct-undo:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.20); }
+
+.ord-deduct-chooser {
+  margin-top: 10px;
+  padding: 12px;
+  background: rgba(0,0,0,0.30);
+  border: 1px solid rgba(125,211,252,0.18);
+  border-radius: 10px;
+}
+.ord-deduct-chooser-title {
+  font-size: 10px; letter-spacing: 0.18em; font-weight: 800;
+  text-transform: uppercase; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  margin-bottom: 8px;
+}
+.ord-deduct-options {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 8px;
+}
+.ord-deduct-opt {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.ord-deduct-opt:hover {
+  background: rgba(125,211,252,0.10);
+  border-color: rgba(125,211,252,0.30);
+}
+.ord-deduct-opt small {
+  display: block;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.ord-deduct-opt.insufficient {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.ord-deduct-opt.insufficient:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.06);
+}
+.ord-deduct-cancel {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.ord-card.is-deducted { opacity: 0.85; }
+.ord-card.is-deducted .ord-card-name { text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: rgba(255,255,255,0.20); }
+.ord-meta-pill.pct.frozen { font-style: italic; }
+.ord-meta-pill.pct.frozen::after { content: ' · frozen'; opacity: 0.6; font-style: normal; }
+
+/* ============================================================
+   SUBSCRIPTION ROW URGENT FLASH — fires when the renewal is
+   ≤ 5 days away (including today / tomorrow / past).
+   ============================================================ */
+.sub-row.is-urgent {
+  background: linear-gradient(135deg, rgba(255,138,138,0.14), rgba(255,138,138,0.06)) !important;
+  border: 1px solid rgba(255,138,138,0.30) !important;
+  animation: subRowPulse 1.4s ease-in-out infinite;
+}
+.sub-row.is-urgent .sub-renew-line {
+  color: #FF8A8A !important;
+  font-weight: 700;
+}
+@keyframes subRowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,138,138,0); }
+  50%      { box-shadow: 0 0 16px 0 rgba(255,138,138,0.32); }
+}
+
+/* ============================================================
+   DESKTOP / TABLET: lay the Subs add form out as a clean 4-column
+   grid so the 8 controls (name, amount, ccy, period, date, from,
+   auto-deduct, +add) sit in two readable rows instead of cramming
+   into one squashed row.
+   ============================================================ */
+@media (min-width: 601px) {
+  [data-section="subs"] .quick-add {
+    display: grid !important;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 8px !important;
+    align-items: stretch;
+  }
+  [data-section="subs"] .quick-add > * {
+    flex: none !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    width: 100%;
+  }
+  [data-section="subs"] .quick-add .date-field,
+  [data-section="subs"] .quick-add .sub-auto-toggle {
+    box-sizing: border-box;
+  }
+}
+
+/* ============================================================
+   MOBILE: stack every "add" composer (Subs / Orders / Wishlist)
+   vertically with full-width tappable fields + a big Add button.
+   Without this the forms squeeze 5-6 controls into one row and
+   become unusable on a phone.
+   ============================================================ */
+@media (max-width: 600px) {
+  /* ---------- Subscriptions add row ---------- */
+  [data-section="subs"] .quick-add {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px;
+    gap: 8px;
+  }
+  [data-section="subs"] .quick-add input,
+  [data-section="subs"] .quick-add select,
+  [data-section="subs"] .quick-add button {
+    flex: none !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    width: 100%;
+    padding: 12px 14px !important;
+    font-size: 15px !important;
+  }
+
+  /* ---------- Orders add grid ---------- */
+  .ord-add-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px;
+    padding: 8px;
+  }
+  .ord-add-grid .ord-input,
+  .ord-add-grid .ord-add-btn {
+    width: 100%;
+    padding: 12px 14px !important;
+    font-size: 15px !important;
+    text-align: left;
+  }
+  .ord-add-grid .ord-input-cost { text-align: right; }
+  .ord-add-grid .ord-input-ccy,
+  .ord-add-grid .ord-input-from { text-align: center; }
+  .ord-add-grid .ord-add-btn { text-align: center; }
+
+  /* ---------- Wishlist add row ---------- */
+  .wish-add-row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px;
+    gap: 8px;
+  }
+  .wish-add-row .wish-input,
+  .wish-add-row .wish-add-btn {
+    flex: none !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    width: 100%;
+    padding: 12px 14px !important;
+    font-size: 15px !important;
+  }
+  .wish-add-row .wish-input-amt { text-align: right; }
+  .wish-add-row .wish-input-ccy { text-align: center; }
+
+  /* ---------- Bigger close (×) and edit buttons in rows ---------- */
+  .ord-card-x, .wish-row-x {
+    padding: 8px 12px !important;
+    font-size: 16px !important;
+  }
+}
+
+/* ============================================================
+   DATE FIELDS — wrap each date input in a label that shows a
+   📅 emoji prefix so it's obvious what the field is. The native
+   picker icon gets a dark-mode filter so it shows up on the
+   dark background instead of vanishing into it.
+   ============================================================ */
+.date-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: var(--bg-card);
+  border: 0.5px solid rgba(255,255,255,0.10);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  color: var(--text-primary);
+  min-width: 0;
+  cursor: pointer;
+}
+.date-field .date-emoji {
+  font-size: 15px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.date-field input[type="date"] {
+  background: transparent !important;
+  border: none !important;
+  outline: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-width: 0;
+  flex: 1;
+  width: 100%;
+  color-scheme: dark;
+}
+input[type="date"] { color-scheme: dark; }
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+  opacity: 0.7;
+  cursor: pointer;
+}
+@media (max-width: 600px) {
+  .date-field {
+    width: 100%;
+    padding: 12px 14px;
+  }
+  .date-field input[type="date"] { font-size: 15px !important; }
+}
+
+/* ============================================================
+   SUBSCRIPTION AUTO-DEDUCT TOGGLE
+   ============================================================ */
+.sub-auto-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-card);
+  border: 0.5px solid rgba(255,255,255,0.10);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.sub-auto-toggle input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.sub-auto-track {
+  position: relative;
+  display: inline-block;
+  width: 30px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.sub-auto-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: #FAFAFA;
+  transition: transform 0.2s, background 0.2s;
+}
+.sub-auto-toggle input:checked ~ .sub-auto-track {
+  background: #6BE3A4;
+}
+.sub-auto-toggle input:checked ~ .sub-auto-track .sub-auto-thumb {
+  transform: translateX(14px);
+  background: #04201A;
+}
+.sub-auto-toggle input:checked ~ .sub-auto-label {
+  color: #6BE3A4;
+  font-weight: 700;
+}
+.sub-auto-label {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* In-row toggle (smaller) for individual sub rows */
+.sub-row-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  font-weight: 700;
+}
+.sub-row-toggle.is-on {
+  background: rgba(107,227,164,0.10);
+  border-color: rgba(107,227,164,0.30);
+  color: #6BE3A4;
+}
+.sub-row-toggle .sub-row-toggle-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+}
+.sub-row-toggle.is-on .sub-row-toggle-dot {
+  background: #6BE3A4;
+  box-shadow: 0 0 6px rgba(107,227,164,0.7);
+}
+
+.sub-from-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(125,211,252,0.10);
+  border: 1px solid rgba(125,211,252,0.20);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: #BFE3F8;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .sub-auto-toggle { width: 100%; justify-content: space-between; padding: 12px 14px; }
+}
+
+/* ============================================================
+   BARBERING INCOME
+   ============================================================ */
+.barber-hero { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+@media(max-width:480px){ .barber-hero { grid-template-columns:1fr 1fr; } }
+.barber-stat-eyebrow {
+  font-size:10px; color:var(--text-tertiary); text-transform:uppercase;
+  letter-spacing:0.12em; font-weight:700; font-family:var(--font-mono); margin-bottom:4px;
+}
+.barber-stat-num {
+  font-size:26px; font-weight:700; color:var(--text-primary);
+  line-height:1.1; font-variant-numeric:tabular-nums;
+}
+.barber-stat-sub { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
+.barber-stat-num.green { color:#6BE3A4; }
+.barber-add-grid {
+  display:grid; grid-template-columns:1fr 1fr 1fr auto;
+  gap:6px; padding:4px; background:rgba(0,0,0,0.30); border-radius:12px;
+}
+@media(max-width:600px){
+  .barber-add-grid { grid-template-columns:1fr 1fr; gap:8px; padding:8px; }
+  .barber-add-btn { grid-column:1/-1; padding:12px; text-align:center; }
+}
+.barber-field { display:flex; flex-direction:column; }
+.barber-field-label {
+  font-size:9px; color:var(--text-tertiary); text-transform:uppercase;
+  letter-spacing:0.12em; font-weight:700; font-family:var(--font-mono);
+  padding:6px 10px 0;
+}
+.barber-field input {
+  background:transparent; border:none; outline:none;
+  color:var(--text-primary); font-family:inherit;
+  font-size:18px; font-weight:700; padding:4px 10px 8px;
+  font-variant-numeric:tabular-nums; width:100%;
+  -moz-appearance:textfield;
+}
+.barber-field input::-webkit-outer-spin-button,
+.barber-field input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.barber-field input[type="date"] { font-size:13px; font-weight:500; color-scheme:dark; }
+.barber-add-btn {
+  padding:0 16px; align-self:end; margin:4px 0;
+  background:linear-gradient(180deg,#6EE7B7,#4ED4A0); color:#04201A;
+  border:none; border-radius:9px; font-family:inherit; font-size:13px; font-weight:700;
+  cursor:pointer; white-space:nowrap;
+  box-shadow:0 4px 14px rgba(110,231,183,0.22);
+  transition:transform 0.12s, box-shadow 0.18s;
+}
+.barber-add-btn:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(110,231,183,0.36); }
+.barber-add-btn:active { transform:scale(0.97); }
+.barber-preview {
+  display:none; margin-top:8px; padding:8px 12px;
+  background:rgba(110,231,183,0.06); border:1px solid rgba(110,231,183,0.14);
+  border-radius:8px; font-size:12px; color:var(--text-secondary);
+  font-family:var(--font-mono);
+}
+.barber-week-head {
+  display:flex; justify-content:space-between; align-items:baseline;
+  margin:16px 4px 6px;
+}
+.barber-week-label {
+  font-size:10px; letter-spacing:0.18em; font-weight:800;
+  text-transform:uppercase; color:var(--text-tertiary); font-family:var(--font-mono);
+}
+.barber-week-total {
+  font-size:12px; font-weight:700; color:#6BE3A4;
+  font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+}
+.barber-session-row {
+  display:grid; grid-template-columns:1fr auto auto auto;
+  gap:10px; align-items:center;
+  padding:10px 14px; background:rgba(255,255,255,0.025);
+  border-radius:10px; margin-bottom:5px; font-size:13px;
+  transition:background 0.15s;
+}
+.barber-session-row:hover { background:rgba(255,255,255,0.045); }
+.barber-session-date { color:var(--text-primary); font-weight:500; }
+.barber-session-meta {
+  color:var(--text-secondary); font-family:var(--font-mono);
+  font-size:11px; white-space:nowrap;
+}
+.barber-session-total {
+  color:#6BE3A4; font-weight:700; font-family:var(--font-mono);
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.barber-session-del {
+  background:transparent; border:1px solid rgba(255,255,255,0.08);
+  color:var(--text-tertiary); cursor:pointer; font-size:13px;
+  padding:3px 8px; border-radius:6px; font-family:inherit; line-height:1;
+}
+.barber-session-del:hover { color:#FF8A8A; border-color:rgba(255,138,138,0.35); }
+.barber-empty {
+  text-align:center; padding:24px 0;
+  font-size:12px; color:var(--text-tertiary); font-style:italic;
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ===== BACK BUTTON ===== -->
+<a href="index.html" class="fin-back-btn" aria-label="Back to dashboard">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  <span>Back</span>
+</a>
+
+<!-- ===== NET WORTH ===== -->
+<div class="section" data-section="net">
+  <div class="section-title">
+    <span class="section-title-text">NET WORTH</span>
+  </div>
+  <div class="card" style="background:transparent;border:none !important;box-shadow:none;padding:0;overflow:visible">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+      <div>
+        <div style="font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.04em;font-weight:500">Total net worth</div>
+        <div id="netWorthTotal" style="font-size:34px;font-weight:700;color:var(--text-primary);line-height:1.05;margin-top:2px">CHF 0</div>
+        <div id="netWorthBreakdown" style="font-size:11px;color:var(--text-tertiary);margin-top:4px"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:var(--text-tertiary)">CHF</span>
+        <select id="netWorthCurrency" style="background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:inherit;cursor:pointer">
+          <option value="CHF">CHF</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="GBP">GBP</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Overview row: stock-style line chart on the left, donut allocation chart on the right -->
+    <div class="nw-overview-grid">
+      <div class="nw-chart-wrap" id="nwChartWrap">
+        <div class="nw-chart-head">
+          <span class="nw-chart-label">All-time</span>
+          <span class="nw-chart-delta" id="nwChartDelta">—</span>
+        </div>
+        <svg class="nw-chart-svg" id="nwChartSvg" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="nwChartGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="currentColor" stop-opacity="0.55"/>
+              <stop offset="60%"  stop-color="currentColor" stop-opacity="0.18"/>
+              <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Faint reference grid lines across the full chart height -->
+          <line class="nw-chart-grid" x1="0" x2="600" y1="40"  y2="40"/>
+          <line class="nw-chart-grid" x1="0" x2="600" y1="100" y2="100"/>
+          <line class="nw-chart-grid" x1="0" x2="600" y1="160" y2="160"/>
+          <path id="nwChartArea" fill="url(#nwChartGrad)" d=""/>
+          <path id="nwChartLine" fill="none" stroke="currentColor" stroke-width="2.4"
+                stroke-linejoin="round" stroke-linecap="round"
+                style="filter: drop-shadow(0 0 6px currentColor)" d=""/>
+        </svg>
+        <!-- Stats overlay — fills the empty space inside the chart card.
+             Always visible: shows what 1% is, plus high/low/current. -->
+        <div class="nw-chart-stats" id="nwChartStats">
+          <div class="nw-stat">
+            <div class="nw-stat-label">1% =</div>
+            <div class="nw-stat-val" id="nwStat1pct">—</div>
+          </div>
+          <div class="nw-stat">
+            <div class="nw-stat-label">All-time high</div>
+            <div class="nw-stat-val" id="nwStatHigh">—</div>
+          </div>
+          <div class="nw-stat">
+            <div class="nw-stat-label">All-time low</div>
+            <div class="nw-stat-val" id="nwStatLow">—</div>
+          </div>
+          <div class="nw-stat">
+            <div class="nw-stat-label">Snapshots</div>
+            <div class="nw-stat-val" id="nwStatCount">—</div>
+          </div>
+        </div>
+        <div class="nw-chart-empty" id="nwChartEmpty">Add or edit an asset to start tracking your net worth over time.</div>
+      </div>
+
+      <div class="nw-donut-wrap">
+        <div class="nw-chart-head">
+          <span class="nw-chart-label">Allocation</span>
+          <span class="nw-chart-delta" id="nwDonutCount">—</span>
+        </div>
+        <div class="nw-donut-stage">
+          <svg class="nw-donut-svg" id="nwDonutSvg" viewBox="0 0 140 140" aria-hidden="true"></svg>
+          <div class="nw-donut-center">
+            <div class="nw-donut-num" id="nwDonutTotal">—</div>
+            <div class="nw-donut-sub">total</div>
+          </div>
+        </div>
+        <div class="nw-donut-empty" id="nwDonutEmpty">Add an account to see your breakdown</div>
+        <div class="nw-donut-legend" id="nwDonutLegend"></div>
+      </div>
+    </div>
+
+    <!-- Activity log — every add / edit, newest first -->
+    <div class="nw-activity" id="nwActivity">
+      <div class="nw-activity-h">
+        <span class="nw-chart-label">Recent activity</span>
+        <span class="nw-chart-delta" id="nwActivityCount">—</span>
+      </div>
+      <div class="nw-activity-list" id="nwActivityList"></div>
+      <div class="nw-activity-empty" id="nwActivityEmpty">No activity yet — add your first account.</div>
+    </div>
+
+    <div class="card-grid" style="gap:10px">
+      <!-- Bank accounts -->
+      <div class="card nw-subcard">
+        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span>🏦 Bank accounts</span><span id="bankTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
+        <div id="bankList" class="nw-list"></div>
+        <div class="quick-add">
+          <input type="text" placeholder="Account name" id="bankName" />
+          <input type="number" placeholder="Amount" id="bankAmount" step="0.01" />
+          <button class="quick-add-btn" id="bankAddBtn">+</button>
+        </div>
+      </div>
+      <!-- Stocks / Investments -->
+      <div class="card nw-subcard">
+        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span>📈 Stocks / Investments</span><span id="stocksTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
+        <div id="stocksList" class="nw-list"></div>
+        <div class="quick-add">
+          <input type="text" placeholder="Stock / fund" id="stocksName" />
+          <input type="number" placeholder="Value" id="stocksAmount" step="0.01" />
+          <button class="quick-add-btn" id="stocksAddBtn">+</button>
+        </div>
+      </div>
+      <!-- Crypto -->
+      <div class="card nw-subcard">
+        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span>🪙 Crypto</span><span id="cryptoTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
+        <div id="cryptoList" class="nw-list"></div>
+        <div class="quick-add">
+          <input type="text" placeholder="Coin / wallet" id="cryptoName" />
+          <input type="number" placeholder="Value" id="cryptoAmount" step="0.01" />
+          <button class="quick-add-btn" id="cryptoAddBtn">+</button>
+        </div>
+      </div>
+      <!-- Other assets -->
+      <div class="card nw-subcard">
+        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span>💼 Other assets</span><span id="otherTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
+        <div id="otherList" class="nw-list"></div>
+        <div class="quick-add">
+          <input type="text" placeholder="Asset name" id="otherName" />
+          <input type="number" placeholder="Value" id="otherAmount" step="0.01" />
+          <button class="quick-add-btn" id="otherAddBtn">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== BARBERING INCOME ===== -->
+<div class="section" id="barberSection" style="margin-top:28px">
+  <div class="section-title">
+    <span class="section-title-text">BARBERING INCOME</span>
+  </div>
+
+  <!-- Hero stats -->
+  <div class="card" style="background:linear-gradient(135deg,rgba(107,227,164,0.08),rgba(110,231,183,0.04));border:1px solid rgba(107,227,164,0.18)">
+    <div class="barber-hero">
+      <div>
+        <div class="barber-stat-eyebrow">All Time</div>
+        <div class="barber-stat-num" id="barberTotalEarned">$0</div>
+        <div class="barber-stat-sub" id="barberTotalSessions">0 sessions</div>
+      </div>
+      <div>
+        <div class="barber-stat-eyebrow">This Week</div>
+        <div class="barber-stat-num green" id="barberThisWeek">$0</div>
+        <div class="barber-stat-sub" id="barberThisWeekCuts">0 cuts</div>
+      </div>
+      <div>
+        <div class="barber-stat-eyebrow">Avg / Week</div>
+        <div class="barber-stat-num" id="barberWeekAvg">$0</div>
+        <div class="barber-stat-sub" id="barberAvgCuts">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly earnings chart -->
+  <div class="card" style="padding:16px 18px">
+    <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.14em;font-weight:700;font-family:var(--font-mono);margin-bottom:10px">Weekly Earnings</div>
+    <div style="position:relative">
+      <svg id="barberChartSvg" style="width:100%;height:160px;display:block;overflow:visible" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
+      <div id="barberChartEmpty" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-tertiary);font-style:italic">Log sessions to see your weekly earnings</div>
+    </div>
+  </div>
+
+  <!-- Log session form -->
+  <div class="card" style="background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05)">
+    <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.16em;font-weight:800;font-family:var(--font-mono);margin-bottom:10px">Log Session</div>
+    <div class="barber-add-grid">
+      <div class="barber-field">
+        <span class="barber-field-label">Date</span>
+        <input type="date" id="barberDate">
+      </div>
+      <div class="barber-field">
+        <span class="barber-field-label">Haircuts</span>
+        <input type="number" id="barberCuts" min="1" max="99" placeholder="0">
+      </div>
+      <div class="barber-field">
+        <span class="barber-field-label">Price / cut</span>
+        <input type="number" id="barberPrice" min="0" step="0.50" placeholder="0.00">
+      </div>
+      <button class="barber-add-btn" id="barberAddBtn">+ Log</button>
+    </div>
+    <div class="barber-preview" id="barberPreview"></div>
+  </div>
+
+  <!-- Session log -->
+  <div id="barberLog"></div>
+</div>
+</div>
+
+<script>
+(function() {
+
+  // ============================================================
+  // STORAGE — localStorage shim. Same interface as the dashboard's
+  // storeGet/storeSet so the existing render code drops straight in.
+  // ============================================================
+  function storeGet(key) {
+    try { const raw = localStorage.getItem(key); return raw == null ? null : JSON.parse(raw); }
+    catch (e) { return null; }
+  }
+  function storeSet(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }
+
+  // ============================================================
+  // ORD_FROM_META — must be hoisted to the top of the IIFE.
+  // renderOrders runs as part of the FIRST renderAllNetWorth call
+  // (long before the ORDERS section is reached) and will TDZ-crash
+  // the whole script if any saved orders trigger the render path
+  // and ORD_FROM_META hasn't been initialized yet.
+  // ============================================================
+  const ORD_FROM_META = {
+    bank:   { name: 'Bank',   color: '#7DD3FC' },
+    stocks: { name: 'Stocks', color: '#6EE7B7' },
+    crypto: { name: 'Crypto', color: '#FBBF24' },
+    other:  { name: 'Other',  color: '#B794F4' }
+  };
+
+  // ============================================================
+  // NET WORTH (copied from the main dashboard, verbatim logic)
+  // ============================================================
+  const CURRENCY_KEY = 'nw_currency';
+  const NW_CATS = [
+    { key: 'bank',   listId: 'bankList',   totalId: 'bankTotal',   nameId: 'bankName',   amtId: 'bankAmount',   addId: 'bankAddBtn' },
+    { key: 'stocks', listId: 'stocksList', totalId: 'stocksTotal', nameId: 'stocksName', amtId: 'stocksAmount', addId: 'stocksAddBtn' },
+    { key: 'crypto', listId: 'cryptoList', totalId: 'cryptoTotal', nameId: 'cryptoName', amtId: 'cryptoAmount', addId: 'cryptoAddBtn' },
+    { key: 'other',  listId: 'otherList',  totalId: 'otherTotal',  nameId: 'otherName',  amtId: 'otherAmount',  addId: 'otherAddBtn' }
+  ];
+  const currencyEl = document.getElementById('netWorthCurrency');
+  const netWorthTotal = document.getElementById('netWorthTotal');
+  const netWorthBreakdown = document.getElementById('netWorthBreakdown');
+
+  let exchangeRates = { CHF: 1, USD: 1, EUR: 1, GBP: 1 };
+  async function loadExchangeRates() {
+    try {
+      const res = await fetch('https://open.er-api.com/v6/latest/CHF');
+      const data = await res.json();
+      if (data && data.rates) {
+        exchangeRates = {
+          CHF: 1,
+          USD: data.rates.USD || 1,
+          EUR: data.rates.EUR || 1,
+          GBP: data.rates.GBP || 1
+        };
+        renderAllNetWorth();
+        if (typeof renderSubs === 'function') renderSubs();
+      }
+    } catch (e) {}
+  }
+  loadExchangeRates();
+
+  function fmtMoney(amountCHF) {
+    const symbol = currencyEl ? currencyEl.value : 'CHF';
+    const rate = exchangeRates[symbol] || 1;
+    const num = (Number(amountCHF) || 0) * rate;
+    return symbol + ' ' + num.toLocaleString('en-US', { minimumFractionDigits: num % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
+  }
+
+  function renderNetWorthCategory(cat) {
+    const items = storeGet('nw:' + cat.key) || [];
+    const list = document.getElementById(cat.listId);
+    if (!list) return 0;
+    list.innerHTML = '';
+    let total = 0;
+    items.forEach((it, idx) => {
+      total += Number(it.amount) || 0;
+      const row = document.createElement('div');
+      row.className = 'nw-row';
+      const name = document.createElement('span');
+      name.className = 'nw-name nw-name-edit';
+      name.textContent = it.name;
+      name.title = 'Tap to rename';
+      name.addEventListener('click', () => beginNwNameEdit(name, items, idx, cat.key));
+      const amt = document.createElement('span');
+      amt.className = 'nw-amt nw-amt-edit';
+      amt.textContent = fmtMoney(it.amount);
+      amt.title = 'Tap to edit · type +500 to add, -200 to subtract, or a new total';
+      amt.addEventListener('click', () => beginNwAmountEdit(amt, items, idx, cat.key));
+      const del = document.createElement('button'); del.className = 'nw-del'; del.textContent = '×';
+      del.addEventListener('click', () => {
+        const removed = items[idx];
+        items.splice(idx, 1); storeSet('nw:' + cat.key, items);
+        if (removed) logActivity(cat.key, removed.name, -(Number(removed.amount) || 0), 'delete');
+        renderAllNetWorth();
+      });
+      row.appendChild(name); row.appendChild(amt); row.appendChild(del);
+      list.appendChild(row);
+    });
+    document.getElementById(cat.totalId).textContent = fmtMoney(total);
+    return total;
+  }
+
+  function beginNwAmountEdit(amtEl, items, idx, catKey) {
+    if (amtEl.querySelector('input')) return;
+    const symbol = currencyEl ? currencyEl.value : 'CHF';
+    const rate = exchangeRates[symbol] || 1;
+    const curCHF = Number(items[idx].amount) || 0;
+    const curDisplay = curCHF * rate;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.inputMode = 'decimal';
+    input.value = String(curDisplay.toFixed(curDisplay % 1 === 0 ? 0 : 2));
+    input.style.cssText = 'width:110px;padding:4px 8px;font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.30);border:1px solid rgba(255,255,255,0.10);color:var(--text-primary);border-radius:6px;text-align:right;font-variant-numeric:tabular-nums;outline:none;';
+    amtEl.textContent = '';
+    amtEl.appendChild(input);
+    setTimeout(() => { input.focus(); input.select(); }, 0);
+    let saved = false;
+    function save() {
+      if (saved) return; saved = true;
+      const v = input.value.trim();
+      if (v === '') { renderAllNetWorth(); return; }
+      // Input is in the DISPLAY currency. Convert back to CHF before storing.
+      let nextDisplay = curDisplay;
+      if (/^[+\-]\s*\d/.test(v)) {
+        const delta = parseFloat(v.replace(/\s+/g, ''));
+        if (!isNaN(delta)) nextDisplay = curDisplay + delta;
+      } else {
+        const n = parseFloat(v);
+        if (!isNaN(n)) nextDisplay = n;
+      }
+      if (nextDisplay < 0) nextDisplay = 0;
+      const nextCHF = nextDisplay / rate;
+      const deltaCHF = nextCHF - curCHF;
+      items[idx].amount = nextCHF;
+      storeSet('nw:' + catKey, items);
+      if (Math.abs(deltaCHF) > 0.005) {
+        logActivity(catKey, items[idx].name, deltaCHF, 'edit');
+      }
+      renderAllNetWorth();
+    }
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); save(); }
+      else if (e.key === 'Escape') { saved = true; renderAllNetWorth(); }
+    });
+    input.addEventListener('blur', save);
+  }
+  function beginNwNameEdit(nameEl, items, idx, catKey) {
+    if (nameEl.querySelector('input')) return;
+    const cur = String(items[idx].name || '');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = cur;
+    input.style.cssText = 'width:100%;padding:4px 8px;font-family:inherit;font-size:13px;background:rgba(0,0,0,0.30);border:1px solid rgba(255,255,255,0.10);color:var(--text-primary);border-radius:6px;outline:none;';
+    nameEl.textContent = '';
+    nameEl.appendChild(input);
+    setTimeout(() => { input.focus(); input.select(); }, 0);
+    let saved = false;
+    function save() {
+      if (saved) return; saved = true;
+      const v = input.value.trim();
+      if (v) { items[idx].name = v; storeSet('nw:' + catKey, items); }
+      renderAllNetWorth();
+    }
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); save(); }
+      else if (e.key === 'Escape') { saved = true; renderAllNetWorth(); }
+    });
+    input.addEventListener('blur', save);
+  }
+
+  function renderAllNetWorth() {
+    let grand = 0;
+    const breakdown = [];
+    const sliceTotals = {};
+    NW_CATS.forEach(cat => {
+      const sub = renderNetWorthCategory(cat);
+      grand += sub;
+      sliceTotals[cat.key] = sub;
+      if (sub > 0) breakdown.push(cat.key + ': ' + fmtMoney(sub));
+    });
+    if (netWorthTotal) netWorthTotal.textContent = fmtMoney(grand);
+    if (netWorthBreakdown) netWorthBreakdown.textContent = breakdown.join('  •  ');
+    logNetWorthSnapshot(grand);
+    renderNetWorthChart();
+    renderAllocationDonut(sliceTotals, grand);
+    renderActivity();
+    if (typeof renderWishlist === 'function') renderWishlist();
+    if (typeof renderOrders   === 'function') renderOrders();
+    if (typeof updateOrdPreview === 'function') updateOrdPreview();
+  }
+
+  // ============================================================
+  // ACTIVITY LOG — every add / edit / delete with delta in CHF.
+  // Renders newest first. Cap at 50.
+  // ============================================================
+  const ACTIVITY_KEY = 'nw:activity';
+  const ACTIVITY_MAX = 50;
+  function logActivity(catKey, name, deltaCHF, kind) {
+    const arr = storeGet(ACTIVITY_KEY) || [];
+    arr.push({ ts: Date.now(), cat: catKey, name: String(name || ''), delta: Number(deltaCHF) || 0, kind: kind || 'add' });
+    if (arr.length > ACTIVITY_MAX) arr.splice(0, arr.length - ACTIVITY_MAX);
+    storeSet(ACTIVITY_KEY, arr);
+  }
+  function fmtActivityDate(ts) {
+    const d = new Date(ts);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const yesterday = today - 86400000;
+    const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    if (dayStart === today) {
+      return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+    if (dayStart === yesterday) return 'yest';
+    const mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return mons[d.getMonth()] + ' ' + d.getDate();
+  }
+  function renderActivity() {
+    const list = document.getElementById('nwActivityList');
+    const empty = document.getElementById('nwActivityEmpty');
+    const count = document.getElementById('nwActivityCount');
+    if (!list) return;
+    const arr = (storeGet(ACTIVITY_KEY) || []).slice().sort((a, b) => b.ts - a.ts);
+    if (!arr.length) {
+      list.classList.add('hidden');
+      empty.classList.remove('hidden');
+      count.textContent = '—';
+      return;
+    }
+    list.classList.remove('hidden');
+    empty.classList.add('hidden');
+    count.textContent = arr.length + ' event' + (arr.length === 1 ? '' : 's');
+    list.innerHTML = arr.slice(0, 30).map(e => {
+      const meta = NW_SLICE_META[e.cat] || { name: e.cat, color: '#FFFFFF' };
+      const sign = e.delta >= 0 ? '+' : '—';
+      const cls = e.delta >= 0 ? 'up' : 'down';
+      const amt = fmtMoney(Math.abs(e.delta));
+      const kind = e.kind === 'edit' ? 'EDIT' : (e.kind === 'delete' ? 'DELETE' : 'ADD');
+      return '<div class="nw-activity-row" style="color:' + meta.color + '">'
+        + '<span class="nw-activity-bar" style="background:' + meta.color + '"></span>'
+        + '<div class="nw-activity-info">'
+        +   '<div class="nw-activity-name">' + escapeHtml(e.name || '(unnamed)') + '</div>'
+        +   '<div class="nw-activity-meta">' + meta.name + ' · ' + kind + '</div>'
+        + '</div>'
+        + '<span class="nw-activity-amt ' + cls + '">' + sign + amt + '</span>'
+        + '<span class="nw-activity-date">' + fmtActivityDate(e.ts) + '</span>'
+        + '</div>';
+    }).join('');
+  }
+
+  // ============================================================
+  // ALLOCATION DONUT — pie chart of where money lives + annual subs
+  // burn (so you can see how much subs are eating vs your assets).
+  // Each NW category gets a fixed color; subs get red because outflow.
+  // ============================================================
+  const NW_SLICE_META = {
+    bank:   { name: 'Bank',     color: '#7DD3FC' },
+    stocks: { name: 'Stocks',   color: '#6EE7B7' },
+    crypto: { name: 'Crypto',   color: '#FBBF24' },
+    other:  { name: 'Other',    color: '#B794F4' },
+    subs:   { name: 'Subs/yr',  color: '#FF8A8A' }
+  };
+  function donutArcPath(cx, cy, rOuter, rInner, startAngle, endAngle) {
+    const x1o = cx + rOuter * Math.cos(startAngle);
+    const y1o = cy + rOuter * Math.sin(startAngle);
+    const x2o = cx + rOuter * Math.cos(endAngle);
+    const y2o = cy + rOuter * Math.sin(endAngle);
+    const x1i = cx + rInner * Math.cos(endAngle);
+    const y1i = cy + rInner * Math.sin(endAngle);
+    const x2i = cx + rInner * Math.cos(startAngle);
+    const y2i = cy + rInner * Math.sin(startAngle);
+    const large = (endAngle - startAngle) > Math.PI ? 1 : 0;
+    return 'M ' + x1o.toFixed(2) + ' ' + y1o.toFixed(2)
+      + ' A ' + rOuter + ' ' + rOuter + ' 0 ' + large + ' 1 ' + x2o.toFixed(2) + ' ' + y2o.toFixed(2)
+      + ' L ' + x1i.toFixed(2) + ' ' + y1i.toFixed(2)
+      + ' A ' + rInner + ' ' + rInner + ' 0 ' + large + ' 0 ' + x2i.toFixed(2) + ' ' + y2i.toFixed(2)
+      + ' Z';
+  }
+  function renderAllocationDonut(catTotals, grand) {
+    const svg    = document.getElementById('nwDonutSvg');
+    const total  = document.getElementById('nwDonutTotal');
+    const empty  = document.getElementById('nwDonutEmpty');
+    const legend = document.getElementById('nwDonutLegend');
+    const count  = document.getElementById('nwDonutCount');
+    if (!svg || !total || !legend) return;
+
+    // Build one slice per individual NW account, colored by parent category.
+    // So "star one" (bank) and "Revolute" (bank) become two blue slices,
+    // "vanguard" (stocks) a green slice, etc. — instead of one aggregate
+    // "Bank" / "Stocks" slice each.
+    const slices = [];
+    NW_CATS.forEach(cat => {
+      const meta = NW_SLICE_META[cat.key] || { color: '#FFFFFF' };
+      const items = storeGet('nw:' + cat.key) || [];
+      items.forEach((it, i) => {
+        const v = Number(it.amount) || 0;
+        if (v > 0) {
+          slices.push({
+            key: cat.key + '::' + i,
+            name: String(it.name || '(unnamed)'),
+            color: meta.color,
+            value: v
+          });
+        }
+      });
+    });
+    // Subs annualized — one aggregate slice (no per-sub breakdown here).
+    const subItems = storeGet('subs') || [];
+    const annualSubsCHF = subItems.reduce((s, it) => s + monthlyEquivalent(it) * 12, 0);
+    if (annualSubsCHF > 0) {
+      const meta = NW_SLICE_META.subs;
+      slices.push({ key: 'subs', name: meta.name, color: meta.color, value: annualSubsCHF });
+    }
+
+    const sliceTotal = slices.reduce((s, x) => s + x.value, 0);
+
+    if (!slices.length || sliceTotal <= 0) {
+      svg.innerHTML = '<circle cx="70" cy="70" r="60" fill="rgba(255,255,255,0.025)"/>'
+                    + '<circle cx="70" cy="70" r="44" fill="#0A0A0B"/>';
+      total.textContent = '—';
+      empty.classList.remove('hidden');
+      legend.innerHTML = '';
+      count.textContent = '—';
+      return;
+    }
+    empty.classList.add('hidden');
+    total.textContent = fmtMoney(grand).split(' ')[1] || fmtMoney(grand);
+    count.textContent = slices.length + ' slice' + (slices.length === 1 ? '' : 's');
+
+    // Sort largest first
+    slices.sort((a, b) => b.value - a.value);
+    let angle = -Math.PI / 2;
+    let html = '';
+    slices.forEach(s => {
+      const sliceAngle = (s.value / sliceTotal) * Math.PI * 2;
+      const pad = slices.length > 1 ? 0.015 : 0;
+      const a1 = angle + pad;
+      const a2 = angle + sliceAngle - pad;
+      if (a2 > a1) {
+        html += '<path d="' + donutArcPath(70, 70, 60, 44, a1, a2) + '" fill="' + s.color + '"></path>';
+      }
+      angle += sliceAngle;
+    });
+    svg.innerHTML = html;
+
+    legend.innerHTML = slices.map(s => {
+      const pct = ((s.value / sliceTotal) * 100).toFixed(1);
+      return '<div class="nw-leg" style="color:' + s.color + '">'
+        + '<span class="nw-leg-dot" style="background:' + s.color + '"></span>'
+        + '<span class="nw-leg-name">' + escapeHtml(s.name) + '</span>'
+        + '<span class="nw-leg-pct">' + pct + '%</span>'
+        + '</div>';
+    }).join('');
+  }
+
+  // Net-worth history chart
+  const NW_HISTORY_KEY = 'nw:history';
+  const NW_HISTORY_MAX = 500;
+  function logNetWorthSnapshot(grandCHF) {
+    const v = Number(grandCHF) || 0;
+    const hist = storeGet(NW_HISTORY_KEY) || [];
+    const last = hist[hist.length - 1];
+    if (last && Math.abs((last.v || 0) - v) < 0.005) return;
+    hist.push({ t: Date.now(), v: v });
+    if (hist.length > NW_HISTORY_MAX) hist.splice(0, hist.length - NW_HISTORY_MAX);
+    storeSet(NW_HISTORY_KEY, hist);
+  }
+  function nwSmoothPath(points) {
+    if (points.length < 2) return '';
+    if (points.length === 2) return 'M' + points[0].x + ',' + points[0].y + ' L' + points[1].x + ',' + points[1].y;
+    const d = ['M' + points[0].x + ',' + points[0].y];
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i - 1] || points[i];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[i + 2] || p2;
+      const c1x = p1.x + (p2.x - p0.x) / 6;
+      const c1y = p1.y + (p2.y - p0.y) / 6;
+      const c2x = p2.x - (p3.x - p1.x) / 6;
+      const c2y = p2.y - (p3.y - p1.y) / 6;
+      d.push('C' + c1x + ',' + c1y + ' ' + c2x + ',' + c2y + ' ' + p2.x + ',' + p2.y);
+    }
+    return d.join(' ');
+  }
+  function renderNetWorthChart() {
+    const wrap = document.getElementById('nwChartWrap');
+    const svg = document.getElementById('nwChartSvg');
+    const linePath = document.getElementById('nwChartLine');
+    const areaPath = document.getElementById('nwChartArea');
+    const deltaEl = document.getElementById('nwChartDelta');
+    if (!wrap || !svg || !linePath || !areaPath) return;
+    const hist = storeGet(NW_HISTORY_KEY) || [];
+    if (hist.length < 1) {
+      wrap.classList.remove('has-data');
+      linePath.setAttribute('d', '');
+      areaPath.setAttribute('d', '');
+      if (deltaEl) { deltaEl.textContent = '—'; deltaEl.classList.remove('up', 'down'); }
+      renderChartStats([]);
+      return;
+    }
+    wrap.classList.add('has-data');
+    const first = hist[0].v;
+    const last = hist[hist.length - 1].v;
+    const change = last - first;
+    const direction = Math.abs(change) < 0.005 ? 'flat' : (change > 0 ? 'up' : 'down');
+    const color = direction === 'up' ? '#6BE3A4' : direction === 'down' ? '#FF8A8A' : 'var(--text-tertiary)';
+    svg.style.color = color;
+    if (deltaEl) {
+      deltaEl.classList.remove('up', 'down');
+      if (direction === 'up')   deltaEl.classList.add('up');
+      if (direction === 'down') deltaEl.classList.add('down');
+      if (direction === 'flat') {
+        deltaEl.textContent = 'Flat';
+      } else if (Math.abs(first) < 0.5) {
+        // Baseline was effectively zero — % would be infinite. Show the
+        // absolute amount instead so "added 1,276" reads clearly.
+        const sign = change > 0 ? '+' : '—';
+        deltaEl.textContent = sign + fmtMoney(Math.abs(change));
+      } else {
+        const pct = (change / Math.abs(first)) * 100;
+        const sign = change > 0 ? '+' : '—';
+        const absPct = Math.abs(pct);
+        const pctStr = absPct >= 100 ? absPct.toFixed(0) : absPct >= 10 ? absPct.toFixed(1) : absPct.toFixed(2);
+        deltaEl.textContent = sign + pctStr + '%';
+      }
+    }
+    const W = 600, H = 200, pad = 8;
+    const vals = hist.map(p => p.v);
+    const minV = Math.min.apply(null, vals);
+    const maxV = Math.max.apply(null, vals);
+    const range = (maxV - minV) || Math.max(1, Math.abs(maxV));
+    if (hist.length === 1) {
+      const y = H / 2;
+      linePath.setAttribute('d', 'M0,' + y + ' L' + W + ',' + y);
+      areaPath.setAttribute('d', 'M0,' + y + ' L' + W + ',' + y + ' L' + W + ',' + H + ' L0,' + H + ' Z');
+      renderChartStats(hist);
+      return;
+    }
+    const points = hist.map((p, i) => ({
+      x: (i / (hist.length - 1)) * W,
+      y: H - pad - ((p.v - minV) / range) * (H - pad * 2)
+    }));
+    const lineD = nwSmoothPath(points);
+    linePath.setAttribute('d', lineD);
+    const lastPt = points[points.length - 1];
+    const firstPt = points[0];
+    areaPath.setAttribute('d', lineD + ' L' + lastPt.x + ',' + H + ' L' + firstPt.x + ',' + H + ' Z');
+    renderChartStats(hist);
+  }
+
+  // Stats overlay — what 1% is worth, all-time high/low, snapshot count.
+  // Reads the snapshot history (CHF base) and converts to display currency.
+  function renderChartStats(hist) {
+    const oneEl   = document.getElementById('nwStat1pct');
+    const highEl  = document.getElementById('nwStatHigh');
+    const lowEl   = document.getElementById('nwStatLow');
+    const countEl = document.getElementById('nwStatCount');
+    if (!oneEl) return;
+    if (!hist || !hist.length) {
+      oneEl.textContent = '—';
+      highEl.textContent = '—';
+      lowEl.textContent = '—';
+      countEl.textContent = '0';
+      return;
+    }
+    const vals = hist.map(p => p.v);
+    const last = vals[vals.length - 1];
+    const high = Math.max.apply(null, vals);
+    const low  = Math.min.apply(null, vals);
+    oneEl.textContent   = fmtMoney(last / 100);
+    highEl.textContent  = fmtMoney(high);
+    lowEl.textContent   = fmtMoney(low);
+    countEl.textContent = String(hist.length);
+  }
+
+  NW_CATS.forEach(cat => {
+    const addBtn = document.getElementById(cat.addId);
+    const nameInput = document.getElementById(cat.nameId);
+    const amtInput = document.getElementById(cat.amtId);
+    if (!addBtn) return;
+    function doAdd() {
+      const n = nameInput.value.trim();
+      const a = parseFloat(amtInput.value);
+      if (!n || isNaN(a)) return;
+      // Interpret the input in the CURRENTLY SELECTED display currency, then
+      // convert to CHF for storage. So if USD is selected and user types 40000,
+      // we store 40000 / USD-per-CHF rate — 31,400 CHF; displays as $40,000.
+      const symbol = currencyEl ? currencyEl.value : 'CHF';
+      const rate = exchangeRates[symbol] || 1;
+      const amountCHF = a / rate;
+      const items = storeGet('nw:' + cat.key) || [];
+      items.push({ name: n, amount: amountCHF });
+      storeSet('nw:' + cat.key, items);
+      logActivity(cat.key, n, amountCHF, 'add');
+      nameInput.value = ''; amtInput.value = '';
+      renderAllNetWorth();
+    }
+    addBtn.addEventListener('click', doAdd);
+    nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doAdd(); });
+    amtInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doAdd(); });
+  });
+
+  if (currencyEl) {
+    const savedCur = storeGet(CURRENCY_KEY);
+    if (savedCur) currencyEl.value = savedCur;
+    currencyEl.addEventListener('change', () => {
+      storeSet(CURRENCY_KEY, currencyEl.value);
+      renderAllNetWorth();
+    });
+  }
+  renderAllNetWorth();
+
+
+  // ============================================================
+  // BARBERING INCOME
+  // ============================================================
+  const BARBER_KEY = 'barber:sessions';
+
+  function getBarberSessions() { return storeGet(BARBER_KEY) || []; }
+  function saveBarberSessions(arr) { storeSet(BARBER_KEY, arr); }
+
+  function isoWeekKey(dateStr) {
+    // ISO 8601 week: week containing Thursday; week 1 = week with Jan 4
+    const d = new Date(dateStr + 'T12:00:00');
+    const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dow = tmp.getUTCDay() || 7; // Mon=1, Sun=7
+    tmp.setUTCDate(tmp.getUTCDate() + 4 - dow); // nearest Thursday
+    const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+    const wk = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
+    return tmp.getUTCFullYear() + '-W' + String(wk).padStart(2, '0');
+  }
+
+  function getThisWeekKey() {
+    return isoWeekKey(new Date().toISOString().slice(0, 10));
+  }
+
+  function nextWeekKey(wkKey) {
+    const [yr, w] = wkKey.split('-W').map(Number);
+    // Find the Monday of that week, advance 7 days
+    const jan4 = new Date(Date.UTC(yr, 0, 4));
+    const dow = jan4.getUTCDay() || 7;
+    const monday = new Date(jan4);
+    monday.setUTCDate(jan4.getUTCDate() - dow + 1 + (w - 1) * 7 + 7);
+    return isoWeekKey(monday.toISOString().slice(0, 10));
+  }
+
+  function getWeekRange(fromKey, toKey) {
+    const weeks = [];
+    let cur = fromKey;
+    for (let i = 0; i < 200 && cur <= toKey; i++) {
+      weeks.push(cur);
+      cur = nextWeekKey(cur);
+    }
+    return weeks;
+  }
+
+  function formatWeekLabel(wkKey) {
+    const [yr, w] = wkKey.split('-W').map(Number);
+    const jan4 = new Date(Date.UTC(yr, 0, 4));
+    const dow = jan4.getUTCDay() || 7;
+    const monday = new Date(jan4);
+    monday.setUTCDate(jan4.getUTCDate() - dow + 1 + (w - 1) * 7);
+    const sunday = new Date(monday);
+    sunday.setUTCDate(monday.getUTCDate() + 6);
+    const fmt = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return fmt(monday) + ' – ' + fmt(sunday);
+  }
+
+  function fmtBarberAmt(n) {
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  function renderBarberChart() {
+    const sessions = getBarberSessions();
+    const svg = document.getElementById('barberChartSvg');
+    const empty = document.getElementById('barberChartEmpty');
+    svg.innerHTML = '';
+    if (!sessions.length) { empty.style.display = 'flex'; return; }
+    empty.style.display = 'none';
+
+    const weekTotals = {};
+    sessions.forEach(s => {
+      const wk = isoWeekKey(s.date);
+      weekTotals[wk] = (weekTotals[wk] || 0) + s.cuts * s.pricePerCut;
+    });
+    const sortedWks = Object.keys(weekTotals).sort();
+    const allWeeks = getWeekRange(sortedWks[0], getThisWeekKey());
+    const display = allWeeks.slice(-16);
+    const values = display.map(w => weekTotals[w] || 0);
+
+    const W = 600, H = 160;
+    const padT = 18, padB = 28, padL = 4, padR = 4;
+    const n = display.length;
+    const maxVal = Math.max(...values, 1);
+    const totalW = W - padL - padR;
+    const barW = totalW / n;
+    const gap = Math.max(2, barW * 0.18);
+    const bw = barW - gap;
+    const cH = H - padT - padB;
+    const ns = 'http://www.w3.org/2000/svg';
+    const thisWk = getThisWeekKey();
+
+    [0.33, 0.67, 1].forEach(r => {
+      const y = padT + cH * (1 - r);
+      const el = document.createElementNS(ns, 'line');
+      el.setAttribute('x1', padL); el.setAttribute('x2', W - padR);
+      el.setAttribute('y1', y);    el.setAttribute('y2', y);
+      el.setAttribute('stroke', 'rgba(255,255,255,0.05)');
+      el.setAttribute('stroke-width', '1');
+      svg.appendChild(el);
+    });
+
+    values.forEach((v, i) => {
+      const x = padL + i * barW + gap / 2;
+      const bh = v > 0 ? Math.max(3, (v / maxVal) * cH) : 0;
+      const y = padT + cH - bh;
+      const isNow = display[i] === thisWk;
+
+      const rect = document.createElementNS(ns, 'rect');
+      rect.setAttribute('x', x); rect.setAttribute('y', y);
+      rect.setAttribute('width', Math.max(1, bw));
+      rect.setAttribute('height', bh); rect.setAttribute('rx', '3');
+      rect.setAttribute('fill', isNow ? '#6EE7B7' : 'rgba(110,231,183,0.38)');
+      if (isNow) rect.setAttribute('filter', 'drop-shadow(0 0 5px rgba(110,231,183,0.55))');
+      svg.appendChild(rect);
+
+      if (v > 0 && n <= 12) {
+        const lbl = document.createElementNS(ns, 'text');
+        lbl.setAttribute('x', x + bw / 2); lbl.setAttribute('y', y - 3);
+        lbl.setAttribute('text-anchor', 'middle'); lbl.setAttribute('font-size', '9');
+        lbl.setAttribute('fill', isNow ? '#6EE7B7' : 'rgba(110,231,183,0.65)');
+        lbl.setAttribute('font-family', 'ui-monospace,monospace');
+        lbl.textContent = '$' + Math.round(v);
+        svg.appendChild(lbl);
+      }
+
+      if (n <= 10 || i % 2 === 0 || i === n - 1) {
+        const wlbl = document.createElementNS(ns, 'text');
+        wlbl.setAttribute('x', x + bw / 2); wlbl.setAttribute('y', H - 5);
+        wlbl.setAttribute('text-anchor', 'middle'); wlbl.setAttribute('font-size', '8');
+        wlbl.setAttribute('fill', isNow ? '#6EE7B7' : 'rgba(118,116,110,0.75)');
+        wlbl.setAttribute('font-family', 'ui-monospace,monospace');
+        wlbl.textContent = display[i].split('-')[1];
+        svg.appendChild(wlbl);
+      }
+    });
+  }
+
+  function renderBarber() {
+    const sessions = getBarberSessions();
+    const logEl = document.getElementById('barberLog');
+
+    const totalEarned = sessions.reduce((s, x) => s + x.cuts * x.pricePerCut, 0);
+    const totalSessions = sessions.length;
+    const totalCuts = sessions.reduce((s, x) => s + x.cuts, 0);
+
+    const thisWk = getThisWeekKey();
+    const thisWkSess = sessions.filter(x => isoWeekKey(x.date) === thisWk);
+    const thisWkEarned = thisWkSess.reduce((s, x) => s + x.cuts * x.pricePerCut, 0);
+    const thisWkCuts = thisWkSess.reduce((s, x) => s + x.cuts, 0);
+
+    const weekTotals = {};
+    sessions.forEach(x => {
+      const w = isoWeekKey(x.date);
+      weekTotals[w] = (weekTotals[w] || 0) + x.cuts * x.pricePerCut;
+    });
+    const wks = Object.keys(weekTotals);
+    const avgEarned = wks.length ? totalEarned / wks.length : 0;
+    const avgCuts = wks.length ? totalCuts / wks.length : 0;
+
+    document.getElementById('barberTotalEarned').textContent = fmtBarberAmt(totalEarned);
+    document.getElementById('barberTotalSessions').textContent = totalSessions + ' session' + (totalSessions === 1 ? '' : 's');
+    document.getElementById('barberThisWeek').textContent = fmtBarberAmt(thisWkEarned);
+    document.getElementById('barberThisWeekCuts').textContent = thisWkCuts + ' cut' + (thisWkCuts === 1 ? '' : 's');
+    document.getElementById('barberWeekAvg').textContent = fmtBarberAmt(avgEarned);
+    document.getElementById('barberAvgCuts').textContent = (wks.length ? avgCuts.toFixed(1) : '0') + ' cuts avg';
+
+    renderBarberChart();
+
+    logEl.innerHTML = '';
+    if (!sessions.length) {
+      logEl.innerHTML = '<div class="barber-empty">No sessions logged yet</div>';
+      return;
+    }
+
+    const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
+    const byWeek = {};
+    sorted.forEach(s => {
+      const w = isoWeekKey(s.date);
+      (byWeek[w] = byWeek[w] || []).push(s);
+    });
+
+    Object.entries(byWeek).sort((a, b) => b[0].localeCompare(a[0])).forEach(([wk, wkSess]) => {
+      const wkTotal = wkSess.reduce((t, s) => t + s.cuts * s.pricePerCut, 0);
+      const wkCuts = wkSess.reduce((t, s) => t + s.cuts, 0);
+      const isNow = wk === thisWk;
+
+      const head = document.createElement('div');
+      head.className = 'barber-week-head';
+      head.innerHTML = '<span class="barber-week-label">'
+        + (isNow ? 'THIS WEEK' : formatWeekLabel(wk))
+        + '</span><span class="barber-week-total">'
+        + fmtBarberAmt(wkTotal) + ' · ' + wkCuts + ' cut' + (wkCuts === 1 ? '' : 's')
+        + '</span>';
+      logEl.appendChild(head);
+
+      wkSess.sort((a, b) => b.date.localeCompare(a.date)).forEach(s => {
+        const row = document.createElement('div');
+        row.className = 'barber-session-row';
+        const d = new Date(s.date + 'T12:00:00');
+        const dateLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        row.innerHTML = '<span class="barber-session-date">' + dateLabel + '</span>'
+          + '<span class="barber-session-meta">' + s.cuts + ' × $' + s.pricePerCut.toFixed(2) + '</span>'
+          + '<span class="barber-session-total">' + fmtBarberAmt(s.cuts * s.pricePerCut) + '</span>'
+          + '<button class="barber-session-del" data-id="' + s.id + '">×</button>';
+        row.querySelector('button').addEventListener('click', () => {
+          saveBarberSessions(getBarberSessions().filter(x => x.id !== s.id));
+          renderBarber();
+        });
+        logEl.appendChild(row);
+      });
+    });
+  }
+
+  const barberDateEl   = document.getElementById('barberDate');
+  const barberCutsEl   = document.getElementById('barberCuts');
+  const barberPriceEl  = document.getElementById('barberPrice');
+  const barberPreviewEl = document.getElementById('barberPreview');
+  barberDateEl.value = new Date().toISOString().slice(0, 10);
+
+  function updateBarberPreview() {
+    const cuts = parseInt(barberCutsEl.value) || 0;
+    const price = parseFloat(barberPriceEl.value) || 0;
+    if (cuts > 0 && price > 0) {
+      barberPreviewEl.style.display = 'block';
+      barberPreviewEl.textContent = cuts + ' cut' + (cuts === 1 ? '' : 's')
+        + ' × $' + price.toFixed(2) + ' = ' + fmtBarberAmt(cuts * price);
+    } else {
+      barberPreviewEl.style.display = 'none';
+    }
+  }
+  barberCutsEl.addEventListener('input', updateBarberPreview);
+  barberPriceEl.addEventListener('input', updateBarberPreview);
+
+  document.getElementById('barberAddBtn').addEventListener('click', () => {
+    const date = barberDateEl.value;
+    const cuts = parseInt(barberCutsEl.value) || 0;
+    const price = parseFloat(barberPriceEl.value) || 0;
+    if (!date || cuts < 1 || price <= 0) return;
+    const arr = getBarberSessions();
+    arr.push({ id: 'b_' + Date.now(), date, cuts, pricePerCut: price });
+    saveBarberSessions(arr);
+    barberCutsEl.value = '';
+    barberPriceEl.value = '';
+    barberPreviewEl.style.display = 'none';
+    renderBarber();
+  });
+
+  [barberCutsEl, barberPriceEl].forEach(el => {
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('barberAddBtn').click();
+    });
+  });
+
+  renderBarber();
+
+})();
+</script>
+
+</body>
+</html>

@@ -605,20 +605,31 @@
 
   .gm-queue-btn {
     background: none;
-    border: none;
+    border: 1px solid transparent;
+    border-radius: 7px;
     cursor: pointer;
     font-size: 14px;
-    color: var(--text-tertiary);
-    opacity: 0.55;
-    padding: 2px;
-    transition: opacity 0.2s, filter 0.2s, color 0.2s;
+    line-height: 1;
+    color: var(--text-quaternary);
+    padding: 5px 7px;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, filter 0.15s;
     flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .goal-row:hover .gm-queue-btn { color: var(--text-tertiary); }
+
+  .gm-queue-btn:hover {
+    background: rgba(242,192,99,0.12);
+    border-color: rgba(242,192,99,0.25);
+    color: #F2C063;
   }
 
   .gm-queue-btn.is-active {
+    background: rgba(242,192,99,0.14);
+    border-color: rgba(242,192,99,0.35);
     color: #F2C063;
-    opacity: 1;
-    filter: drop-shadow(0 0 4px rgba(242,192,99,0.65));
+    filter: drop-shadow(0 0 5px rgba(242,192,99,0.55));
   }
 
   .goal-delete {
@@ -1091,7 +1102,7 @@
     const qBtn = document.createElement('button');
     qBtn.className = 'gm-queue-btn' + (g.queued ? ' is-active' : '');
     qBtn.textContent = '⚡';
-    qBtn.title = 'Queue for productivity window';
+    qBtn.title = g.queued ? 'Remove priority' : 'Mark as priority focus';
     if (readOnly) qBtn.disabled = true;
     li.appendChild(qBtn);
 
@@ -1116,6 +1127,7 @@
     if (!readOnly) {
       qBtn.addEventListener('click', () => {
         goals[idx].queued = !goals[idx].queued;
+        qBtn.title = goals[idx].queued ? 'Remove priority' : 'Mark as priority focus';
         storeSet(key, goals);
         li.classList.add('is-queue-flashing');
         setTimeout(() => reload(key), 480);
