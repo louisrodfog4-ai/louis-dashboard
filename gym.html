@@ -394,6 +394,46 @@
     margin-top: 14px;
     padding-top: 14px;
     border-top: 1px solid rgba(255,255,255,0.06);
+    align-items: flex-start;
+  }
+
+  .exercise-search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .exercise-suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #18181a;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 10px;
+    z-index: 200;
+    overflow: hidden;
+    display: none;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.55);
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .exercise-suggestions.open { display: block; }
+
+  .ex-suggestion {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .ex-suggestion:hover,
+  .ex-suggestion.is-focused { background: rgba(255,255,255,0.07); }
+
+  .ex-suggestion-custom {
+    color: var(--text-secondary);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    font-style: italic;
   }
 
   /* ── Shared inputs / buttons ── */
@@ -800,9 +840,11 @@
       <div id="exerciseBlocks"></div>
 
       <div class="add-exercise-row">
-        <select class="gym-select" id="exerciseSel">
-          <option value="">Select exercise…</option>
-        </select>
+        <div class="exercise-search-wrap">
+          <input type="text" class="gym-input" id="exerciseSearch"
+            placeholder="Search or type exercise…" autocomplete="off" spellcheck="false">
+          <div class="exercise-suggestions" id="exerciseSuggestions"></div>
+        </div>
         <button class="gym-btn-secondary" id="addExerciseBtn">+ Add</button>
       </div>
     </div>
@@ -1056,20 +1098,54 @@
     ctx.fillText(fmt(history[history.length - 1].date), pad.left + cW, H - pad.bottom + 4);
   }
 
-  // ── Exercise selector population ─────────────────────────────────────────
-  function populateExerciseSel() {
-    const sel = document.getElementById('exerciseSel');
-    const list = EXERCISES[dayType][gymType];
+  // ── Exercise search / suggestions ────────────────────────────────────────
+  let suggestionFocusIdx = -1;
+
+  function getFilteredExercises(query) {
     const session = getOrCreateSession();
-    sel.innerHTML = '<option value="">Select exercise…</option>';
-    list.forEach(name => {
-      if (session.exercises[name]) return; // already added
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      sel.appendChild(opt);
+    const list = EXERCISES[dayType][gymType];
+    const q = query.toLowerCase().trim();
+    return list.filter(name => !session.exercises[name] && (!q || name.toLowerCase().includes(q)));
+  }
+
+  function renderSuggestions(query) {
+    const box = document.getElementById('exerciseSuggestions');
+    const filtered = getFilteredExercises(query);
+    const q = query.trim();
+    box.innerHTML = '';
+    suggestionFocusIdx = -1;
+
+    const items = filtered.map(n => ({ label: n, value: n }));
+    const exactMatch = filtered.some(n => n.toLowerCase() === q.toLowerCase());
+    if (q && !exactMatch) items.push({ label: '+ Add "' + q + '"', value: q, custom: true });
+
+    if (items.length === 0) { box.classList.remove('open'); return; }
+
+    items.forEach(({ label, value, custom }) => {
+      const div = document.createElement('div');
+      div.className = 'ex-suggestion' + (custom ? ' ex-suggestion-custom' : '');
+      div.textContent = label;
+      div.addEventListener('mousedown', e => { e.preventDefault(); addExerciseByName(value); });
+      box.appendChild(div);
     });
-    // also allow typing a custom name via a freeform option if nothing matched
+    box.classList.add('open');
+  }
+
+  function closeSuggestions() {
+    document.getElementById('exerciseSuggestions').classList.remove('open');
+    suggestionFocusIdx = -1;
+  }
+
+  function addExerciseByName(name) {
+    name = name.trim();
+    if (!name) return;
+    const session = getOrCreateSession();
+    if (!session.exercises[name]) session.exercises[name] = [];
+    saveSession(session);
+    document.getElementById('exerciseSearch').value = '';
+    closeSuggestions();
+    renderExerciseBlocks();
+    renderStats();
   }
 
   // ── Render exercise blocks ────────────────────────────────────────────────
@@ -1080,8 +1156,7 @@
     const names = Object.keys(session.exercises);
 
     if (names.length === 0) {
-      container.innerHTML = '<div class="empty-state" style="margin-bottom:10px">No exercises yet — select one below and hit + Add.</div>';
-      populateExerciseSel();
+      container.innerHTML = '<div class="empty-state" style="margin-bottom:10px">No exercises yet — search one below and hit + Add.</div>';
       return;
     }
 
@@ -1317,8 +1392,6 @@
         drawExerciseTrendChart(c, getExerciseHistory(c.dataset.exercise, 10));
       });
     });
-
-    populateExerciseSel();
   }
 
   // ── Weight chart ──────────────────────────────────────────────────────────
@@ -1551,7 +1624,7 @@
     const session = getOrCreateSession();
     session.dayType = dayType;
     saveSession(session);
-    populateExerciseSel();
+    renderSuggestions(document.getElementById('exerciseSearch').value);
   });
 
   document.getElementById('gymToggle').addEventListener('click', e => {
@@ -1563,19 +1636,41 @@
     const session = getOrCreateSession();
     session.gymType = gymType;
     saveSession(session);
-    populateExerciseSel();
+    renderSuggestions(document.getElementById('exerciseSearch').value);
+  });
+
+  // ── Exercise search wiring ────────────────────────────────────────────────
+  const exerciseSearchEl = document.getElementById('exerciseSearch');
+
+  exerciseSearchEl.addEventListener('input', () => renderSuggestions(exerciseSearchEl.value));
+  exerciseSearchEl.addEventListener('focus', () => renderSuggestions(exerciseSearchEl.value));
+  exerciseSearchEl.addEventListener('blur',  () => setTimeout(closeSuggestions, 160));
+
+  exerciseSearchEl.addEventListener('keydown', e => {
+    const box   = document.getElementById('exerciseSuggestions');
+    const items = Array.from(box.querySelectorAll('.ex-suggestion'));
+    if (!items.length) { if (e.key === 'Enter') addExerciseByName(exerciseSearchEl.value); return; }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      suggestionFocusIdx = Math.min(suggestionFocusIdx + 1, items.length - 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      suggestionFocusIdx = Math.max(suggestionFocusIdx - 1, -1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (suggestionFocusIdx >= 0) items[suggestionFocusIdx].dispatchEvent(new MouseEvent('mousedown'));
+      else addExerciseByName(exerciseSearchEl.value);
+      return;
+    } else if (e.key === 'Escape') {
+      closeSuggestions(); return;
+    } else { return; }
+
+    items.forEach((el, i) => el.classList.toggle('is-focused', i === suggestionFocusIdx));
   });
 
   document.getElementById('addExerciseBtn').addEventListener('click', () => {
-    const sel = document.getElementById('exerciseSel');
-    const name = sel.value.trim();
-    if (!name) return;
-    const session = getOrCreateSession();
-    if (!session.exercises[name]) session.exercises[name] = [];
-    saveSession(session);
-    sel.value = '';
-    renderExerciseBlocks();
-    renderStats();
+    addExerciseByName(exerciseSearchEl.value);
   });
 
   // Weight logging
