@@ -1625,40 +1625,78 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 .barber-stat-sub { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
 .barber-stat-num.green { color:#6BE3A4; }
-.barber-add-grid {
-  display:grid; grid-template-columns:1fr 1fr 1fr auto;
-  gap:6px; padding:4px; background:rgba(0,0,0,0.30); border-radius:12px;
+/* Log session form */
+.barber-form { display:flex; flex-direction:column; gap:10px; }
+.barber-form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+@media(max-width:480px){ .barber-form-row { grid-template-columns:1fr; } }
+.barber-label {
+  display:block; font-size:10px; color:var(--text-tertiary); text-transform:uppercase;
+  letter-spacing:0.14em; font-weight:700; font-family:var(--font-mono); margin-bottom:6px;
 }
-@media(max-width:600px){
-  .barber-add-grid { grid-template-columns:1fr 1fr; gap:8px; padding:8px; }
-  .barber-add-btn { grid-column:1/-1; padding:12px; text-align:center; }
+/* Date input */
+.barber-date-input {
+  width:100%; padding:12px 14px;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+  border-radius:10px; color:var(--text-primary); font-family:inherit;
+  font-size:15px; font-weight:600; color-scheme:dark;
+  box-sizing:border-box; cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.barber-field { display:flex; flex-direction:column; }
-.barber-field-label {
-  font-size:9px; color:var(--text-tertiary); text-transform:uppercase;
-  letter-spacing:0.12em; font-weight:700; font-family:var(--font-mono);
-  padding:6px 10px 0;
+.barber-date-input:focus { outline:none; border-color:rgba(110,231,183,0.5); }
+/* Haircut stepper */
+.barber-stepper {
+  display:flex; align-items:center; justify-content:space-between;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+  border-radius:10px; overflow:hidden;
 }
-.barber-field input {
+.barber-stepper-btn {
+  width:48px; height:50px; flex-shrink:0;
+  background:rgba(255,255,255,0.05); border:none;
+  color:var(--text-primary); font-size:22px; font-weight:300;
+  cursor:pointer; font-family:inherit; line-height:1;
+  -webkit-tap-highlight-color: transparent;
+  transition:background 0.12s;
+  display:flex; align-items:center; justify-content:center;
+}
+.barber-stepper-btn:hover  { background:rgba(255,255,255,0.12); }
+.barber-stepper-btn:active { background:rgba(110,231,183,0.18); color:#6EE7B7; }
+.barber-stepper-val {
+  flex:1; text-align:center; font-size:26px; font-weight:700;
+  color:var(--text-primary); font-variant-numeric:tabular-nums;
+  pointer-events:none; user-select:none;
+}
+/* Price input */
+.barber-price-wrap {
+  display:flex; align-items:center;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+  border-radius:10px; overflow:hidden;
+}
+.barber-price-symbol {
+  padding:0 0 0 14px; font-size:18px; font-weight:700;
+  color:var(--text-tertiary); pointer-events:none; flex-shrink:0;
+}
+.barber-price-input {
+  flex:1; width:0; min-width:0; padding:12px 14px;
   background:transparent; border:none; outline:none;
   color:var(--text-primary); font-family:inherit;
-  font-size:18px; font-weight:700; padding:4px 10px 8px;
-  font-variant-numeric:tabular-nums; width:100%;
+  font-size:22px; font-weight:700; font-variant-numeric:tabular-nums;
   -moz-appearance:textfield;
 }
-.barber-field input::-webkit-outer-spin-button,
-.barber-field input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
-.barber-field input[type="date"] { font-size:13px; font-weight:500; color-scheme:dark; }
+.barber-price-input::-webkit-outer-spin-button,
+.barber-price-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.barber-price-wrap:focus-within { border-color:rgba(110,231,183,0.5); }
+/* Log button */
 .barber-add-btn {
-  padding:0 16px; align-self:end; margin:4px 0;
+  width:100%; padding:15px;
   background:linear-gradient(180deg,#6EE7B7,#4ED4A0); color:#04201A;
-  border:none; border-radius:9px; font-family:inherit; font-size:13px; font-weight:700;
-  cursor:pointer; white-space:nowrap;
-  box-shadow:0 4px 14px rgba(110,231,183,0.22);
+  border:none; border-radius:12px; font-family:inherit; font-size:15px; font-weight:700;
+  cursor:pointer; letter-spacing:0.02em;
+  box-shadow:0 4px 18px rgba(110,231,183,0.28);
   transition:transform 0.12s, box-shadow 0.18s;
+  -webkit-tap-highlight-color: transparent;
 }
-.barber-add-btn:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(110,231,183,0.36); }
-.barber-add-btn:active { transform:scale(0.97); }
+.barber-add-btn:hover  { transform:translateY(-1px); box-shadow:0 6px 22px rgba(110,231,183,0.40); }
+.barber-add-btn:active { transform:scale(0.98); box-shadow:none; }
 .barber-preview {
   display:none; margin-top:8px; padding:8px 12px;
   background:rgba(110,231,183,0.06); border:1px solid rgba(110,231,183,0.14);
@@ -1891,23 +1929,34 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   <!-- Log session form -->
   <div class="card" style="background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05)">
-    <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.16em;font-weight:800;font-family:var(--font-mono);margin-bottom:10px">Log Session</div>
-    <div class="barber-add-grid">
-      <div class="barber-field">
-        <span class="barber-field-label">Date</span>
-        <input type="date" id="barberDate">
+    <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.16em;font-weight:800;font-family:var(--font-mono);margin-bottom:12px">Log Session</div>
+    <div class="barber-form">
+      <div class="barber-form-row">
+        <div>
+          <label class="barber-label" for="barberDate">Date</label>
+          <input type="date" id="barberDate" class="barber-date-input">
+        </div>
+        <div>
+          <label class="barber-label">Haircuts</label>
+          <div class="barber-stepper">
+            <button type="button" class="barber-stepper-btn" id="barberCutsDown" aria-label="Decrease">−</button>
+            <span class="barber-stepper-val" id="barberCutsDisplay">0</span>
+            <button type="button" class="barber-stepper-btn" id="barberCutsUp" aria-label="Increase">+</button>
+          </div>
+        </div>
       </div>
-      <div class="barber-field">
-        <span class="barber-field-label">Haircuts</span>
-        <input type="number" id="barberCuts" min="1" max="99" placeholder="0">
+      <div>
+        <label class="barber-label" for="barberPrice">Price per haircut</label>
+        <div class="barber-price-wrap">
+          <span class="barber-price-symbol">$</span>
+          <input type="number" id="barberPrice" class="barber-price-input"
+                 min="0" step="0.50" placeholder="0.00"
+                 inputmode="decimal" autocomplete="off">
+        </div>
       </div>
-      <div class="barber-field">
-        <span class="barber-field-label">Price / cut</span>
-        <input type="number" id="barberPrice" min="0" step="0.50" placeholder="0.00">
-      </div>
-      <button class="barber-add-btn" id="barberAddBtn">+ Log</button>
+      <div class="barber-preview" id="barberPreview"></div>
+      <button type="button" class="barber-add-btn" id="barberAddBtn">+ Log Session</button>
     </div>
-    <div class="barber-preview" id="barberPreview"></div>
   </div>
 
   <!-- Session log -->
@@ -2639,14 +2688,27 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     });
   }
 
-  const barberDateEl   = document.getElementById('barberDate');
-  const barberCutsEl   = document.getElementById('barberCuts');
-  const barberPriceEl  = document.getElementById('barberPrice');
+  // ---- Log session form ----
+  const barberDateEl    = document.getElementById('barberDate');
+  const barberPriceEl   = document.getElementById('barberPrice');
   const barberPreviewEl = document.getElementById('barberPreview');
+  const barberCutsDisplayEl = document.getElementById('barberCutsDisplay');
+
+  let barberCutsCount = 0;
+
+  function setBarberCuts(n) {
+    barberCutsCount = Math.max(0, Math.min(99, n));
+    barberCutsDisplayEl.textContent = barberCutsCount;
+    updateBarberPreview();
+  }
+
+  document.getElementById('barberCutsUp').addEventListener('click', () => setBarberCuts(barberCutsCount + 1));
+  document.getElementById('barberCutsDown').addEventListener('click', () => setBarberCuts(barberCutsCount - 1));
+
   barberDateEl.value = new Date().toISOString().slice(0, 10);
 
   function updateBarberPreview() {
-    const cuts = parseInt(barberCutsEl.value) || 0;
+    const cuts = barberCutsCount;
     const price = parseFloat(barberPriceEl.value) || 0;
     if (cuts > 0 && price > 0) {
       barberPreviewEl.style.display = 'block';
@@ -2656,27 +2718,33 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       barberPreviewEl.style.display = 'none';
     }
   }
-  barberCutsEl.addEventListener('input', updateBarberPreview);
   barberPriceEl.addEventListener('input', updateBarberPreview);
 
   document.getElementById('barberAddBtn').addEventListener('click', () => {
     const date = barberDateEl.value;
-    const cuts = parseInt(barberCutsEl.value) || 0;
+    const cuts = barberCutsCount;
     const price = parseFloat(barberPriceEl.value) || 0;
-    if (!date || cuts < 1 || price <= 0) return;
+    if (!date || cuts < 1 || price <= 0) {
+      // Shake the relevant fields if missing values
+      if (cuts < 1) barberCutsDisplayEl.closest('.barber-stepper').style.borderColor = '#FF8A8A';
+      if (price <= 0) barberPriceEl.closest('.barber-price-wrap').style.borderColor = '#FF8A8A';
+      setTimeout(() => {
+        barberCutsDisplayEl.closest('.barber-stepper').style.borderColor = '';
+        barberPriceEl.closest('.barber-price-wrap').style.borderColor = '';
+      }, 1200);
+      return;
+    }
     const arr = getBarberSessions();
     arr.push({ id: 'b_' + Date.now(), date, cuts, pricePerCut: price });
     saveBarberSessions(arr);
-    barberCutsEl.value = '';
+    setBarberCuts(0);
     barberPriceEl.value = '';
     barberPreviewEl.style.display = 'none';
     renderBarber();
   });
 
-  [barberCutsEl, barberPriceEl].forEach(el => {
-    el.addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('barberAddBtn').click();
-    });
+  barberPriceEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('barberAddBtn').click();
   });
 
   renderBarber();
