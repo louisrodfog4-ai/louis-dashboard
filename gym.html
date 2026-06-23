@@ -1716,6 +1716,10 @@
   });
 
   // ── Exercise search wiring ────────────────────────────────────────────────
+  // Move suggestions to <body> so backdrop-filter on .card doesn't create
+  // a new containing block and break position:fixed coordinates.
+  document.body.appendChild(document.getElementById('exerciseSuggestions'));
+
   const exerciseSearchEl = document.getElementById('exerciseSearch');
 
   exerciseSearchEl.addEventListener('input', () => renderSuggestions(exerciseSearchEl.value));
