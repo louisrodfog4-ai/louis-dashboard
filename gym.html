@@ -725,9 +725,11 @@ img, video, canvas, svg { max-width: 100%; }
   /* Progress photos grid — match the available width */
   .wt-photo-grid { gap: 8px; }
 
-  /* Bottom tab bar — slightly smaller pills so both labels always fit */
-  .tab { padding: 11px 10px; font-size: 13px; }
-  .tabbar { padding-left: 12px; padding-right: 12px; }
+  /* Bottom tab bar — tighter for 4 tabs */
+  .tabbar { padding-left: 10px; padding-right: 10px; }
+  .tabbar-inner { gap: 4px; padding: 4px; }
+  .tab { padding: 10px 6px; font-size: 12px; gap: 5px; letter-spacing: 0; }
+  .tab-icon { width: 16px; height: 16px; }
 }
 
 /* Anything narrower than ~360px (iPhone SE / mini) gets a final pass */
@@ -3493,6 +3495,14 @@ img, video, canvas, svg { max-width: 100%; }
         </svg>
       </span>
       Gym
+    </a>
+    <a href="finances.html" class="tab">
+      <span class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+      </span>
+      Finances
     </a>
   </div>
 </nav>
