@@ -25,11 +25,12 @@ module.exports = async (req, res) => {
     const profile = await gc.getUserProfile();
     const displayName = profile.displayName;
 
-    const [bbRes, sleepRes, sleepRawRes, stressRes, hrvRes, hrRes, stepsRes, summaryRes, respRes] =
+    const [bbRes, sleepRes, sleepRawRes, sleepTodayRes, stressRes, hrvRes, hrRes, stepsRes, summaryRes, respRes] =
       await Promise.allSettled([
         gc.client.get(`${GC_API}/wellness-service/wellness/dailyBodyBattery/${displayName}`, { params: { startDate: today, endDate: today } }),
         gc.getSleepData(new Date(yesterday)),
         gc.client.get(`${GC_API}/wellness-service/wellness/sleep/${yesterday}`),
+        gc.getSleepData(new Date(today)),
         gc.client.get(`${GC_API}/wellness-service/wellness/dailyStress/${today}`),
         gc.client.get(`${GC_API}/hrv-service/hrv/${today}`),
         gc.getHeartRate(new Date(today)),
@@ -41,15 +42,16 @@ module.exports = async (req, res) => {
     if (debug) {
       return res.json({
         dates: { today, yesterday },
-        bodyBattery:  { status: bbRes.status,      value: bbRes.value      ?? bbRes.reason?.message },
-        sleepPackage: { status: sleepRes.status,    value: sleepRes.value   ?? sleepRes.reason?.message },
-        sleepRaw:     { status: sleepRawRes.status, value: sleepRawRes.value ?? sleepRawRes.reason?.message },
-        stress:       { status: stressRes.status,   value: stressRes.value  ?? stressRes.reason?.message },
-        hrv:          { status: hrvRes.status,      value: hrvRes.value     ?? hrvRes.reason?.message },
-        heartRate:    { status: hrRes.status,       value: hrRes.value      ?? hrRes.reason?.message },
-        steps:        { status: stepsRes.status,    value: stepsRes.value   ?? stepsRes.reason?.message },
-        summary:      { status: summaryRes.status,  value: summaryRes.value ?? summaryRes.reason?.message },
-        respiration:  { status: respRes.status,     value: respRes.value    ?? respRes.reason?.message },
+        bodyBattery:   { status: bbRes.status,         value: bbRes.value         ?? bbRes.reason?.message },
+        sleepYesterday:{ status: sleepRes.status,       value: sleepRes.value      ?? sleepRes.reason?.message },
+        sleepRaw:      { status: sleepRawRes.status,    value: sleepRawRes.value   ?? sleepRawRes.reason?.message },
+        sleepToday:    { status: sleepTodayRes.status,  value: sleepTodayRes.value ?? sleepTodayRes.reason?.message },
+        stress:        { status: stressRes.status,      value: stressRes.value     ?? stressRes.reason?.message },
+        hrv:           { status: hrvRes.status,         value: hrvRes.value        ?? hrvRes.reason?.message },
+        heartRate:     { status: hrRes.status,          value: hrRes.value         ?? hrRes.reason?.message },
+        steps:         { status: stepsRes.status,       value: stepsRes.value      ?? stepsRes.reason?.message },
+        summary:       { status: summaryRes.status,     value: summaryRes.value    ?? summaryRes.reason?.message },
+        respiration:   { status: respRes.status,        value: respRes.value       ?? respRes.reason?.message },
       });
     }
 
@@ -74,17 +76,17 @@ module.exports = async (req, res) => {
       if (vals.length) bodyBattery = { current: vals[vals.length - 1], max: Math.max(...vals), min: Math.min(...vals) };
     }
 
-    // Sleep — try package response first, then raw endpoint
+    // Sleep — try yesterday, raw yesterday, and today (Garmin stores under wake date sometimes)
     let sleep = null;
-    const sleepData = sleepRes.status === 'fulfilled' ? sleepRes.value : null;
-    const sleepRaw  = sleepRawRes.status === 'fulfilled' ? sleepRawRes.value : null;
+    const sleepData      = sleepRes.status      === 'fulfilled' ? sleepRes.value      : null;
+    const sleepRawData   = sleepRawRes.status   === 'fulfilled' ? sleepRawRes.value   : null;
+    const sleepTodayData = sleepTodayRes.status === 'fulfilled' ? sleepTodayRes.value : null;
 
-    // garmin-connect package wraps in dailySleepDTO
-    const dto = sleepData?.dailySleepDTO ?? sleepData;
-    // raw endpoint returns it directly
-    const rawDto = sleepRaw?.dailySleepDTO ?? sleepRaw;
+    const dto      = sleepData?.dailySleepDTO      ?? sleepData;
+    const rawDto   = sleepRawData?.dailySleepDTO   ?? sleepRawData;
+    const todayDto = sleepTodayData?.dailySleepDTO ?? sleepTodayData;
 
-    const s = (dto?.sleepTimeSeconds != null ? dto : null) ?? (rawDto?.sleepTimeSeconds != null ? rawDto : null);
+    const s = [dto, rawDto, todayDto].find(d => d?.sleepTimeSeconds != null);
     if (s) {
       sleep = {
         score:  s.sleepScores?.overall?.value ?? s.sleepScore ?? null,
