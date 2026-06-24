@@ -6,31 +6,35 @@
 <meta name="theme-color" content="#050506">
 <meta name="color-scheme" content="dark">
 <title>Health Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
 <script src="topbar.js" defer></script>
 <style>
 :root {
-  --bg: #050506;
-  --bg-card: rgba(255,255,255,0.038);
-  --bg-input: rgba(0,0,0,0.28);
-  --bg-input-focus: rgba(0,0,0,0.36);
-  --bg-dropdown: rgba(15,15,18,0.96);
-  --border: rgba(255,255,255,0.06);
+  --bg: #0a0d0a;
+  --bg-card: rgba(17,26,20,0.95);
+  --bg-input: rgba(0,0,0,0.30);
+  --bg-input-focus: rgba(0,0,0,0.40);
+  --bg-dropdown: rgba(11,17,13,0.97);
+  --border: rgba(255,255,255,0.07);
   --border-soft: rgba(255,255,255,0.04);
   --border-strong: rgba(255,255,255,0.12);
-  --text-primary: #FAFAFA;
-  --text-secondary: #B8B6B0;
-  --text-tertiary: #76746E;
-  --text-quaternary: #4D4B47;
-  --accent: #1D9E75;
-  --accent-glow: rgba(29,158,117,0.35);
-  --good: #6BE3A4;
-  --warn: #F2C063;
-  --bad: #FF8A8A;
-  --warning: #FF8A4D;
+  --text-primary: #eef2ee;
+  --text-secondary: #8a9a8a;
+  --text-tertiary: #4a5a4a;
+  --text-quaternary: #2e3d2e;
+  --accent: #4ade80;
+  --accent-glow: rgba(74,222,128,0.28);
+  --good: #4ade80;
+  --warn: #facc15;
+  --bad: #f87171;
+  --warning: #fb923c;
   --warning-bg: rgba(163,45,45,0.10);
   --tag-stack: #D8AB30;
   --tag-stack-bg: rgba(216,171,48,0.15);
-  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --serif: 'DM Serif Display', Georgia, serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
@@ -50,9 +54,9 @@ html, body {
 body::before {
   content: ''; position: fixed; inset: 0; z-index: 0;
   background:
-    radial-gradient(60% 50% at 82% 14%, rgba(29,158,117,0.13) 0%, transparent 60%),
-    radial-gradient(50% 40% at 18% 90%, rgba(180,180,200,0.06) 0%, transparent 60%);
-  filter: blur(40px); pointer-events: none;
+    radial-gradient(60% 50% at 80% 10%, rgba(74,222,128,0.09) 0%, transparent 60%),
+    radial-gradient(50% 40% at 15% 90%, rgba(74,222,128,0.05) 0%, transparent 60%);
+  filter: blur(48px); pointer-events: none;
   animation: drift 36s ease-in-out infinite alternate;
 }
 body::after {
@@ -71,14 +75,12 @@ main {
 
 /* Section headers */
 .section-title {
-  font-family: var(--font-mono);
-  font-size: 11px; font-weight: 600;
-  letter-spacing: 0.18em; text-transform: uppercase;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--text-tertiary);
   margin: 0 4px 14px;
   display: flex; align-items: center; gap: 12px;
 }
-.section-title::before { content: '≡'; font-size: 14px; opacity: 0.5; }
 .section-title::after {
   content: ''; flex: 1; height: 1px;
   background: linear-gradient(90deg, rgba(255,255,255,0.06), transparent);
@@ -88,19 +90,12 @@ main {
 /* Card */
 .card {
   background: var(--bg-card);
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 20px;
-  backdrop-filter: blur(24px) saturate(1.2);
-  -webkit-backdrop-filter: blur(24px) saturate(1.2);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.35);
   margin-bottom: 10px;
   position: relative; overflow: hidden;
-}
-.card::before {
-  content: ''; position: absolute;
-  top: 0; left: 14px; right: 14px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
-  pointer-events: none;
 }
 
 /* ===== GARMIN SYNC HEADER ===== */
@@ -109,24 +104,26 @@ main {
   margin-bottom: 20px;
 }
 .garmin-title {
-  font-size: 22px; font-weight: 700; color: var(--text-primary);
-  letter-spacing: -0.02em;
+  font-family: var(--serif);
+  font-size: 30px; font-weight: 400; color: var(--text-primary);
+  letter-spacing: -0.01em; line-height: 1;
 }
 .garmin-subtitle {
-  font-size: 12px; color: var(--text-tertiary);
-  font-family: var(--font-mono); margin-top: 2px;
+  font-size: 11px; color: var(--text-tertiary);
+  font-family: var(--font-mono); margin-top: 5px;
 }
 .garmin-refresh-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 14px;
-  background: rgba(29,158,117,0.12); border: 1px solid rgba(29,158,117,0.30);
-  border-radius: 10px; color: #6BE3A4;
-  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
-  letter-spacing: 0.10em; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px;
+  background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.30);
+  border-radius: 30px; color: var(--accent);
+  font-family: var(--font); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase;
   cursor: pointer; -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
 }
-.garmin-refresh-btn:hover { background: rgba(29,158,117,0.22); border-color: rgba(29,158,117,0.50); }
+.garmin-refresh-btn:hover { background: rgba(74,222,128,0.16); border-color: rgba(74,222,128,0.50); }
 .garmin-refresh-btn:active { transform: scale(0.97); }
 .garmin-refresh-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
 .garmin-refresh-btn.loading svg { animation: spin 0.8s linear infinite; }
@@ -142,27 +139,20 @@ main {
 /* ===== TODAY'S CALL ===== */
 .todays-call {
   padding: 16px 18px;
-  background: linear-gradient(135deg, rgba(29,158,117,0.12), rgba(110,231,183,0.06));
-  border: 1px solid rgba(110,231,183,0.22);
+  background: rgba(74,222,128,0.04);
+  border: 1px solid rgba(74,222,128,0.15);
   border-radius: 14px; margin-bottom: 10px;
-  position: relative; overflow: hidden;
-}
-.todays-call::before {
-  content: '';
-  position: absolute; top: 0; left: 14px; right: 14px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(110,231,183,0.3), transparent);
-  pointer-events: none;
 }
 .call-eyebrow {
-  font-size: 9.5px; font-weight: 800; letter-spacing: 0.20em;
-  text-transform: uppercase; color: #6BE3A4;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.20em;
+  text-transform: uppercase; color: var(--accent);
   font-family: var(--font-mono); margin-bottom: 8px;
 }
 .call-text {
-  font-size: 16px; font-weight: 600; color: var(--text-primary);
-  line-height: 1.4;
+  font-size: 15px; font-weight: 500; color: var(--text-primary);
+  line-height: 1.5;
 }
-.call-text.loading { color: var(--text-tertiary); font-style: italic; font-size: 14px; }
+.call-text.loading { color: var(--text-tertiary); font-style: italic; font-size: 13px; }
 
 /* ===== BODY BATTERY RING ===== */
 .bb-grid {
@@ -207,8 +197,8 @@ main {
 @media (max-width: 480px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } }
 .metric-tile {
   padding: 14px 14px 12px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 12px;
 }
 .metric-tile-label {
@@ -350,10 +340,9 @@ main {
 /* ===== SUPPLEMENT TRACKER (from daily stack) ===== */
 .stack-card {
   background: var(--bg-card);
-  border-radius: 16px; padding: 22px 22px 18px;
-  backdrop-filter: blur(24px) saturate(1.2);
-  -webkit-backdrop-filter: blur(24px) saturate(1.2);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+  border-radius: 14px; padding: 22px 22px 18px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.35);
 }
 .stack-head { margin-bottom: 12px; }
 .sf-eyebrow {
@@ -574,29 +563,29 @@ main {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
   display: flex; justify-content: center;
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
-  background: linear-gradient(180deg, rgba(5,5,6,0) 0%, rgba(5,5,6,0.78) 38%, rgba(5,5,6,0.94) 100%);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   pointer-events: none;
 }
 .tabbar-inner {
   pointer-events: auto; display: flex;
-  width: 100%; max-width: 460px;
-  gap: 6px; padding: 6px;
-  background: rgba(20,20,22,0.72); border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 18px; box-shadow: 0 12px 36px rgba(0,0,0,0.55);
+  gap: 2px; padding: 6px;
+  background: rgba(12,18,13,0.92); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 50px;
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.55);
 }
 .tab {
-  flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center;
-  gap: 8px; padding: 12px 14px; border-radius: 13px;
-  font-size: 14px; font-weight: 600; letter-spacing: 0.01em;
-  color: rgba(255,255,255,0.6); text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 7px; padding: 10px 18px; border-radius: 40px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-tertiary); text-decoration: none;
   background: transparent; border: 1px solid transparent;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  transition: color 0.15s, background 0.15s;
   -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
 }
-.tab:hover { color: #fff; }
+.tab:hover { color: var(--text-primary); }
 .tab[aria-current="page"] {
-  color: #fff; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.10);
+  color: var(--accent); background: rgba(74,222,128,0.10); border-color: transparent;
 }
 .tab-icon { width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; }
 .tab-icon svg { width: 100%; height: 100%; display: block; }
@@ -654,25 +643,23 @@ main {
     <div class="card">
       <div class="bb-grid">
         <div class="bb-ring-wrap">
-          <svg viewBox="0 0 130 130">
+          <svg viewBox="0 0 130 130" style="overflow:visible">
             <defs>
-              <linearGradient id="bbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#6EE7B7"/>
-                <stop offset="100%" stop-color="#34D399"/>
-              </linearGradient>
+              <filter id="bbGlow" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
             </defs>
-            <!-- Track (270° arc) -->
+            <!-- Track -->
             <circle cx="65" cy="65" r="52" fill="none"
-                    stroke="rgba(255,255,255,0.06)" stroke-width="10"
-                    stroke-dasharray="245.0 81.7"
-                    stroke-linecap="round"
-                    transform="rotate(135, 65, 65)"/>
+                    stroke="#1a2b1c" stroke-width="9"/>
             <!-- Fill -->
             <circle cx="65" cy="65" r="52" fill="none"
-                    stroke="url(#bbGrad)" stroke-width="10"
+                    stroke="#4ade80" stroke-width="9"
                     stroke-dasharray="0 326.7"
                     stroke-linecap="round"
-                    transform="rotate(135, 65, 65)"
+                    transform="rotate(-90, 65, 65)"
+                    filter="url(#bbGlow)"
                     id="bbFillArc"
                     style="transition: stroke-dasharray 0.9s cubic-bezier(0.22,1,0.36,1), stroke 0.4s"/>
           </svg>
@@ -912,16 +899,14 @@ const GARMIN_MCP_URL = 'https://garmin.amalgama.co/api/v1/mcp/c1f3cbaf-d7dd-493a
 const GARMIN_CACHE_KEY = 'health:garmin:cache';
 const API_KEY_STORAGE  = 'health:anthropicKey';
 
-// Body battery ring constants
-// Radius 52, circumference = 2π*52 ≈ 326.7, 270° arc = 245.0, gap = 81.7
+// Body battery ring — full 360° circle, circumference = 2π*52
 const BB_CIRC = 326.73;
-const BB_ARC  = 245.04; // 270/360 * circumference
 
 function bbColor(v) {
-  if (v >= 75) return '#6EE7B7';
-  if (v >= 50) return '#FDE68A';
-  if (v >= 25) return '#FB923C';
-  return '#F87171';
+  if (v >= 75) return '#4ade80';
+  if (v >= 50) return '#facc15';
+  if (v >= 25) return '#fb923c';
+  return '#f87171';
 }
 
 function trColor(v) {
@@ -964,7 +949,7 @@ function renderGarminData(d) {
   const bb = safeNum(d.bodyBattery?.current ?? d.bodyBattery);
   if (bb != null) {
     document.getElementById('bbNum').textContent = Math.round(bb);
-    const arc = Math.max(0, Math.min(1, bb / 100)) * BB_ARC;
+    const arc = Math.max(0, Math.min(1, bb / 100)) * BB_CIRC;
     const arcEl = document.getElementById('bbFillArc');
     arcEl.setAttribute('stroke-dasharray', arc.toFixed(1) + ' ' + (BB_CIRC - arc).toFixed(1));
     arcEl.setAttribute('stroke', bbColor(bb));
