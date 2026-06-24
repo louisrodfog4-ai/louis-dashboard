@@ -344,6 +344,9 @@ main {
   color: var(--text-quaternary); font-style: italic; font-size: 14px;
 }
 
+/* ===== CREATINE STREAK ===== */
+.creatine-streak { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #6ee7b7; background: rgba(110,231,183,0.1); border: 1px solid rgba(110,231,183,0.25); border-radius: 20px; padding: 2px 8px; vertical-align: middle; white-space: nowrap; }
+
 /* ===== SUPPLEMENT TRACKER (from daily stack) ===== */
 .stack-card {
   background: var(--bg-card);
@@ -1304,6 +1307,20 @@ function updateItem(id, field, value) {
   item[field] = value; setItems(items);
 }
 
+function calcSupplementStreak(itemId) {
+  let streak = 0;
+  const today = new Date(getActiveDate());
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = `stack:taken:${d.toISOString().slice(0, 10)}`;
+    const log = storeGet(key) || {};
+    if (log[itemId]) streak++;
+    else break;
+  }
+  return streak;
+}
+
 function render() {
   const items = getItems();
   const taken = getTaken();
@@ -1341,11 +1358,13 @@ function render() {
       let tagHtml = '';
       if (item.tag === 'stack') tagHtml = '<span class="stack-item-tag tag-stack">stack</span>';
       else if (item.tag === 'not-ordered') tagHtml = '<span class="stack-item-tag tag-not-ordered">not ordered</span>';
+      const isCreatine = item.name.toLowerCase().includes('creatine');
+      const streakHtml = isCreatine ? (() => { const s = calcSupplementStreak(item.id); return s > 0 ? `<span class="creatine-streak">🔥 ${s}d</span>` : ''; })() : '';
       row.innerHTML = `
         <button class="stack-check ${isTaken ? 'checked' : ''}" data-action="toggle" data-id="${item.id}" aria-label="Mark taken">${isTaken ? '✓' : ''}</button>
         <div class="stack-item-body">
           <div class="stack-item-name" data-edit="name" data-id="${item.id}">
-            <span class="stack-item-name-text">${escapeHtml(item.name)}</span>${tagHtml}
+            <span class="stack-item-name-text">${escapeHtml(item.name)}</span>${tagHtml}${streakHtml}
           </div>
           <div class="stack-item-meta" data-edit="meta" data-id="${item.id}">${escapeHtml(metaText(item))}</div>
         </div>

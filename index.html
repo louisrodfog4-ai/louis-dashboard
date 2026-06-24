@@ -820,6 +820,36 @@
     .ring-pct { font-size: 32px; }
     .ring-status { font-size: 13px; }
   }
+
+  /* ===== READING TRACKER ===== */
+  .read-card { background: var(--card-bg); border-radius: var(--card-radius); border: 1px solid var(--border-color); overflow: hidden; }
+  .read-book-row { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border-color); }
+  .read-book-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); flex-shrink: 0; }
+  .read-book-input { flex: 1; background: transparent; border: none; color: var(--text-primary); font-size: 14px; font-weight: 600; outline: none; min-width: 0; }
+  .read-book-input::placeholder { color: var(--text-tertiary); font-weight: 400; }
+  .read-daily-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 0.1s; }
+  .read-daily-row:hover { background: rgba(255,255,255,0.02); }
+  .read-check { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.18); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; color: transparent; transition: all 0.15s; }
+  .read-check.done { background: rgba(110,231,183,0.14); border-color: rgba(110,231,183,0.55); color: #6ee7b7; }
+  .read-goal-text { flex: 1; font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .read-goal-edit { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); cursor: pointer; padding: 5px 9px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 6px; flex-shrink: 0; }
+  .read-stats-row { display: flex; border-top: 1px solid var(--border-color); }
+  .read-stat { flex: 1; padding: 14px 16px; text-align: center; border-right: 1px solid var(--border-color); }
+  .read-stat:last-child { border-right: none; }
+  .read-stat-val { font-size: 22px; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+  .read-stat-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 3px; }
+  .read-books-section { padding: 14px 16px; border-top: 1px solid var(--border-color); }
+  .read-books-hdr { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+  .read-books-empty { font-size: 13px; color: var(--text-tertiary); font-style: italic; }
+  .read-book-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .read-book-item:last-child { border-bottom: none; }
+  .read-book-title { font-size: 13px; font-weight: 600; color: var(--text-primary); flex: 1; min-width: 0; }
+  .read-book-date { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+  .read-book-del { font-size: 16px; color: var(--text-tertiary); cursor: pointer; padding: 4px; background: none; border: none; line-height: 1; }
+  .read-add-book-row { display: flex; gap: 8px; margin-top: 12px; }
+  .read-add-input { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-size: 13px; padding: 9px 12px; outline: none; min-width: 0; }
+  .read-add-input:focus { border-color: rgba(110,231,183,0.35); }
+  .read-add-btn { background: rgba(110,231,183,0.1); border: 1px solid rgba(110,231,183,0.3); border-radius: 8px; color: #6ee7b7; font-size: 12px; font-weight: 700; padding: 9px 14px; cursor: pointer; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -932,6 +962,43 @@
         <button class="gm-polish-btn" id="tomorrowPolishBtn">✨ Polish</button>
       </div>
       <div class="polish-status" id="tomorrowStatus"></div>
+    </div>
+  </div>
+
+  <!-- Reading Tracker Section -->
+  <div class="section">
+    <div class="section-title">Reading</div>
+    <div class="read-card">
+      <div class="read-book-row">
+        <span class="read-book-lbl">Now reading</span>
+        <input class="read-book-input" id="readBookInput" type="text" placeholder="Enter book title…" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="read-daily-row" id="readDailyRow">
+        <div class="read-check" id="readCheck">✓</div>
+        <div class="read-goal-text">Read <span id="readGoalNum">10</span> pages today</div>
+        <button class="read-goal-edit" id="readGoalEditBtn" type="button">Edit goal</button>
+      </div>
+      <div class="read-stats-row">
+        <div class="read-stat">
+          <div class="read-stat-val" id="readTotalPages">0</div>
+          <div class="read-stat-lbl">pages total</div>
+        </div>
+        <div class="read-stat">
+          <div class="read-stat-val" id="readStreak">0</div>
+          <div class="read-stat-lbl">day streak</div>
+        </div>
+      </div>
+      <div class="read-books-section">
+        <div class="read-books-hdr">
+          <span>Books read</span>
+          <span id="readBooksCount">0</span>
+        </div>
+        <div id="readBooksList"></div>
+        <div class="read-add-book-row">
+          <input class="read-add-input" id="readAddBookInput" type="text" placeholder="Add finished book…" autocomplete="off">
+          <button class="read-add-btn" id="readAddBookBtn" type="button">+ Add</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1704,6 +1771,105 @@
     initSync();
   })();
   // ── end Supabase sync ──────────────────────────────────────────────────────
+
+  // ===== READING TRACKER =====
+  function getReadingData() {
+    return storeGet('reading_v1') || { goalPages: 10, currentBook: '', log: {}, booksRead: [] };
+  }
+  function saveReadingData(d) { storeSet('reading_v1', d); }
+
+  function calcReadStreak() {
+    const d = getReadingData();
+    let streak = 0;
+    const check = new Date(getActiveDateString());
+    while (true) {
+      const key = check.toISOString().slice(0, 10);
+      if (d.log[key]) { streak++; check.setDate(check.getDate() - 1); }
+      else break;
+    }
+    return streak;
+  }
+
+  function renderReading() {
+    const d = getReadingData();
+    const today = getActiveDateString();
+    const done = !!d.log[today];
+    const total = Object.keys(d.log).filter(k => d.log[k]).length * (d.goalPages || 10);
+
+    document.getElementById('readBookInput').value = d.currentBook || '';
+    document.getElementById('readGoalNum').textContent = d.goalPages || 10;
+    const chk = document.getElementById('readCheck');
+    chk.className = 'read-check' + (done ? ' done' : '');
+    document.getElementById('readTotalPages').textContent = total.toLocaleString();
+    document.getElementById('readStreak').textContent = calcReadStreak();
+
+    const books = d.booksRead || [];
+    document.getElementById('readBooksCount').textContent = books.length;
+    const list = document.getElementById('readBooksList');
+    if (books.length === 0) {
+      list.innerHTML = '<div class="read-books-empty">Finish a book to add it here.</div>';
+    } else {
+      list.innerHTML = books.map((b, i) =>
+        `<div class="read-book-item">
+          <div class="read-book-title">${b.title.replace(/</g,'&lt;')}</div>
+          <div class="read-book-date">${b.finishedAt}</div>
+          <button class="read-book-del" data-idx="${i}" type="button">×</button>
+        </div>`
+      ).join('');
+    }
+  }
+
+  document.getElementById('readDailyRow').addEventListener('click', function(e) {
+    if (e.target.closest('#readGoalEditBtn')) return;
+    const d = getReadingData();
+    const today = getActiveDateString();
+    d.log[today] = !d.log[today];
+    if (!d.log[today]) delete d.log[today];
+    saveReadingData(d);
+    renderReading();
+  });
+
+  document.getElementById('readBookInput').addEventListener('input', function() {
+    const d = getReadingData();
+    d.currentBook = this.value;
+    saveReadingData(d);
+  });
+
+  document.getElementById('readGoalEditBtn').addEventListener('click', function() {
+    const d = getReadingData();
+    const val = prompt('Daily reading goal (pages):', d.goalPages || 10);
+    if (val !== null) {
+      const n = parseInt(val);
+      if (n > 0) { d.goalPages = n; saveReadingData(d); renderReading(); }
+    }
+  });
+
+  document.getElementById('readAddBookBtn').addEventListener('click', function() {
+    const inp = document.getElementById('readAddBookInput');
+    const title = inp.value.trim();
+    if (!title) return;
+    const d = getReadingData();
+    if (!d.booksRead) d.booksRead = [];
+    d.booksRead.unshift({ title, finishedAt: getActiveDateString() });
+    saveReadingData(d);
+    inp.value = '';
+    renderReading();
+  });
+
+  document.getElementById('readAddBookInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('readAddBookBtn').click();
+  });
+
+  document.getElementById('readBooksList').addEventListener('click', function(e) {
+    const btn = e.target.closest('.read-book-del');
+    if (!btn) return;
+    const d = getReadingData();
+    d.booksRead.splice(parseInt(btn.dataset.idx), 1);
+    saveReadingData(d);
+    renderReading();
+  });
+
+  renderReading();
 </script>
 
 <nav class="tabbar" aria-label="Main navigation">
