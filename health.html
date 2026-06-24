@@ -982,7 +982,7 @@ function renderGarminData(d) {
   const hrv = safeNum(d.hrv?.value ?? d.hrv);
   const hrvStatus = d.hrv?.status;
   const hrvEl = document.getElementById('hrvVal');
-  if (hrv != null) {
+  if (hrv != null && hrv > 0) {
     hrvEl.textContent = Math.round(hrv) + ' ms' + (hrvStatus ? ' · ' + hrvStatus : '');
     hrvEl.className = 'bb-stat-val ' + (hrv >= 50 ? 'good' : hrv >= 30 ? 'warn' : 'bad');
   }
@@ -1013,7 +1013,7 @@ function renderGarminData(d) {
 
   // Respiration
   const resp = safeNum(d.respiration?.avg ?? d.respiration);
-  if (resp != null) {
+  if (resp != null && resp > 0) {
     document.getElementById('respVal').textContent = Math.round(resp);
   }
 
