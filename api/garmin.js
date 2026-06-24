@@ -53,10 +53,24 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Body battery
+    // Body battery — try dedicated endpoint first, then extract from stress response
     let bodyBattery = null;
     if (bbRes.status === 'fulfilled' && Array.isArray(bbRes.value) && bbRes.value[0]?.bodyBatteryValues?.length) {
       const vals = bbRes.value[0].bodyBatteryValues.map(v => v.value).filter(v => v != null);
+      if (vals.length) bodyBattery = { current: vals[vals.length - 1], max: Math.max(...vals), min: Math.min(...vals) };
+    }
+    // Fallback: extract from stress response bodyBatteryValuesArray
+    // Format: [[timestamp, status, level, version], ...] — only rows where status === "MEASURED"
+    if (!bodyBattery && stressRes.status === 'fulfilled' && Array.isArray(stressRes.value?.bodyBatteryValuesArray)) {
+      const rows = stressRes.value.bodyBatteryValuesArray;
+      const descriptors = stressRes.value.bodyBatteryValueDescriptorsDTOList ?? [];
+      const levelIdx = descriptors.findIndex(d => d.bodyBatteryValueDescriptorKey === 'bodyBatteryLevel');
+      const statusIdx = descriptors.findIndex(d => d.bodyBatteryValueDescriptorKey === 'bodyBatteryStatus');
+      const idx = levelIdx >= 0 ? levelIdx : 2;
+      const stIdx = statusIdx >= 0 ? statusIdx : 1;
+      const vals = rows
+        .filter(r => r[stIdx] === 'MEASURED' && r[idx] != null && typeof r[idx] === 'number')
+        .map(r => r[idx]);
       if (vals.length) bodyBattery = { current: vals[vals.length - 1], max: Math.max(...vals), min: Math.min(...vals) };
     }
 
