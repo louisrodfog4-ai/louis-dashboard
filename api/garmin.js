@@ -18,6 +18,7 @@ module.exports = async (req, res) => {
     await gc.login(email, password);
 
     const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
 
     const profile = await gc.getUserProfile();
     const displayName = profile.displayName;
@@ -25,7 +26,7 @@ module.exports = async (req, res) => {
     const [bbRes, sleepRes, stressRes, hrvRes, hrRes, stepsRes, summaryRes, respRes] =
       await Promise.allSettled([
         gc.client.get(`${GC_API}/wellness-service/wellness/dailyBodyBattery/${displayName}`, { params: { startDate: today, endDate: today } }),
-        gc.getSleepData(new Date(today)),
+        gc.getSleepData(new Date(yesterday)),
         gc.client.get(`${GC_API}/wellness-service/wellness/dailyStress/${today}`),
         gc.client.get(`${GC_API}/hrv-service/hrv/${today}`),
         gc.getHeartRate(new Date(today)),
