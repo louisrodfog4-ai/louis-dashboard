@@ -1,5 +1,7 @@
 const { GarminConnect } = require('garmin-connect');
 
+const GC_API = 'https://connectapi.garmin.com';
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -17,27 +19,32 @@ module.exports = async (req, res) => {
 
     const today = new Date().toISOString().slice(0, 10);
 
-    const [bbResult, sleepResult, stressResult, hrvResult, summaryResult, respResult] =
+    const profile = await gc.getUserProfile();
+    const displayName = profile.displayName;
+
+    const [bbRes, sleepRes, stressRes, hrvRes, hrRes, stepsRes, summaryRes, respRes] =
       await Promise.allSettled([
-        gc.getBodyBattery(today, today),
-        gc.getSleepData(today),
-        gc.getDailyStressLevel(today),
-        gc.getHrvData(today),
-        gc.getUserSummary(today),
-        gc.getRespAverageData(today, today)
+        gc.client.get(`${GC_API}/wellness-service/wellness/dailyBodyBattery/${displayName}`, { params: { startDate: today, endDate: today } }),
+        gc.getSleepData(new Date(today)),
+        gc.client.get(`${GC_API}/wellness-service/wellness/dailyStress/${today}`),
+        gc.client.get(`${GC_API}/hrv-service/hrv/${today}`),
+        gc.getHeartRate(new Date(today)),
+        gc.getSteps(new Date(today)),
+        gc.client.get(`${GC_API}/usersummary-service/usersummary/daily/${displayName}`, { params: { calendarDate: today } }),
+        gc.client.get(`${GC_API}/wellness-service/wellness/dailyRespiration/${today}`)
       ]);
 
     // Body battery
     let bodyBattery = null;
-    if (bbResult.status === 'fulfilled' && bbResult.value?.[0]?.bodyBatteryValues?.length) {
-      const vals = bbResult.value[0].bodyBatteryValues.map(v => v.value).filter(v => v != null);
+    if (bbRes.status === 'fulfilled' && Array.isArray(bbRes.value) && bbRes.value[0]?.bodyBatteryValues?.length) {
+      const vals = bbRes.value[0].bodyBatteryValues.map(v => v.value).filter(v => v != null);
       if (vals.length) bodyBattery = { current: vals[vals.length - 1], max: Math.max(...vals), min: Math.min(...vals) };
     }
 
     // Sleep
     let sleep = null;
-    if (sleepResult.status === 'fulfilled' && sleepResult.value?.dailySleepDTO) {
-      const s = sleepResult.value.dailySleepDTO;
+    if (sleepRes.status === 'fulfilled' && sleepRes.value?.dailySleepDTO) {
+      const s = sleepRes.value.dailySleepDTO;
       sleep = {
         score: s.sleepScores?.overall?.value ?? null,
         hours: s.sleepTimeSeconds != null ? +(s.sleepTimeSeconds / 3600).toFixed(1) : null,
@@ -52,31 +59,43 @@ module.exports = async (req, res) => {
 
     // Stress
     let stress = null;
-    if (stressResult.status === 'fulfilled' && stressResult.value?.avgStressLevel != null) {
-      stress = { avg: stressResult.value.avgStressLevel };
+    if (stressRes.status === 'fulfilled' && stressRes.value?.avgStressLevel != null) {
+      stress = { avg: stressRes.value.avgStressLevel };
     }
 
     // HRV
     let hrv = null;
-    if (hrvResult.status === 'fulfilled' && hrvResult.value?.hrvSummary?.lastNight != null) {
-      hrv = { value: hrvResult.value.hrvSummary.lastNight, status: hrvResult.value.hrvSummary.status ?? null };
+    if (hrvRes.status === 'fulfilled' && hrvRes.value?.hrvSummary?.lastNight != null) {
+      hrv = { value: hrvRes.value.hrvSummary.lastNight, status: hrvRes.value.hrvSummary.status ?? null };
     }
 
-    // User summary
-    let steps = null, restingHeartRate = null, activeCalories = null, activeMinutes = null, distance = null;
-    if (summaryResult.status === 'fulfilled' && summaryResult.value) {
-      const s = summaryResult.value;
-      steps = { count: s.totalSteps ?? null, goal: s.dailyStepGoal ?? null };
-      restingHeartRate = s.restingHeartRate ?? null;
+    // Resting heart rate
+    let restingHeartRate = null;
+    if (hrRes.status === 'fulfilled' && hrRes.value?.restingHeartRate != null) {
+      restingHeartRate = hrRes.value.restingHeartRate;
+    }
+
+    // Steps
+    let steps = null;
+    if (stepsRes.status === 'fulfilled' && stepsRes.value) {
+      const s = stepsRes.value;
+      steps = { count: s.totalSteps ?? null, goal: s.stepGoal ?? null };
+    }
+
+    // User summary (calories, active minutes, distance)
+    let activeCalories = null, activeMinutes = null, distance = null;
+    if (summaryRes.status === 'fulfilled' && summaryRes.value) {
+      const s = summaryRes.value;
       activeCalories = s.activeKilocalories ?? null;
       activeMinutes = s.activeTimeSeconds != null ? Math.round(s.activeTimeSeconds / 60) : null;
       distance = s.totalDistanceMeters ?? null;
+      if (restingHeartRate == null) restingHeartRate = s.restingHeartRate ?? null;
     }
 
     // Respiration
     let respiration = null;
-    if (respResult.status === 'fulfilled' && respResult.value) {
-      const r = respResult.value;
+    if (respRes.status === 'fulfilled' && respRes.value) {
+      const r = respRes.value;
       const avg = r.avgWakingRespirationValue ?? r.avgRespirationValue ?? r.averageRespirationValue ?? null;
       if (avg != null) respiration = { avg };
     }
