@@ -1110,9 +1110,12 @@ Return ONLY valid JSON, no markdown fences, no explanation. Use this exact struc
 }
 Use null for any field that is unavailable.`;
 
+  const abortCtrl = new AbortController();
+  const timeoutId = setTimeout(() => abortCtrl.abort(), 60000);
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
+      signal: abortCtrl.signal,
       headers: {
         'content-type': 'application/json',
         'x-api-key': apiKey,
@@ -1131,6 +1134,7 @@ Use null for any field that is unavailable.`;
         messages: [{ role: 'user', content: prompt }]
       })
     });
+    clearTimeout(timeoutId);
 
     if (!res.ok) {
       const errBody = await res.text();
@@ -1151,8 +1155,10 @@ Use null for any field that is unavailable.`;
     renderGarminData(garminData);
 
   } catch (err) {
+    clearTimeout(timeoutId);
     console.error('Garmin sync error:', err);
-    document.getElementById('garminError').textContent = 'Sync failed: ' + err.message;
+    const msg = err.name === 'AbortError' ? 'Sync timed out — Garmin MCP server took too long. Try again.' : 'Sync failed: ' + err.message;
+    document.getElementById('garminError').textContent = msg;
     document.getElementById('garminError').classList.remove('hidden');
     document.getElementById('todaysCallText').textContent = 'Sync failed — check your API key and try again.';
     document.getElementById('todaysCallText').className = 'call-text loading';
