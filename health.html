@@ -1116,7 +1116,7 @@ Return ONLY valid JSON, no markdown fences, no explanation. Use this exact struc
 Use null for any field that is unavailable.`;
 
   const abortCtrl = new AbortController();
-  const timeoutId = setTimeout(() => abortCtrl.abort(), 60000);
+  const timeoutId = setTimeout(() => abortCtrl.abort(), 120000);
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
