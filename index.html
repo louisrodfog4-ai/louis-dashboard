@@ -851,15 +851,23 @@
             <feGaussianBlur stdDeviation="2.5" result="blur"/>
             <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
+          <!-- Day-ring gradient: arc start (12 o'clock) → arc tip, updated every tick -->
+          <linearGradient id="ringGrad" gradientUnits="userSpaceOnUse"
+                          x1="60" y1="8" x2="60" y2="8">
+            <stop offset="0%"   stop-color="#FBBF24"/>
+            <stop offset="28%"  stop-color="#FEF9C3"/>
+            <stop offset="62%"  stop-color="#F97316"/>
+            <stop offset="100%" stop-color="#4338CA"/>
+          </linearGradient>
         </defs>
         <!-- Track -->
         <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
         <!-- Fill -->
         <circle id="ringFill" cx="60" cy="60" r="52" fill="none"
-          stroke="#FFD89E" stroke-width="8" stroke-linecap="round"
+          stroke="url(#ringGrad)" stroke-width="8" stroke-linecap="round"
           transform="rotate(-90 60 60)"
           filter="url(#glow)"
-          style="transition: stroke-dashoffset 0.7s cubic-bezier(0.22,1,0.36,1), stroke 0.7s cubic-bezier(0.22,1,0.36,1);"/>
+          style="transition: stroke-dashoffset 0.7s cubic-bezier(0.22,1,0.36,1);"/>
       </svg>
       <div class="ring-overlay">
         <div class="ring-pct" id="ringPct">—</div>
@@ -1359,39 +1367,6 @@
   });
 
   // --- Day Ring ---
-  function lerpColor(a, b, t) {
-    return [
-      Math.round(a[0] + (b[0] - a[0]) * t),
-      Math.round(a[1] + (b[1] - a[1]) * t),
-      Math.round(a[2] + (b[2] - a[2]) * t)
-    ];
-  }
-
-  const SUN_STOPS = [
-    [0,    [255, 216, 158]],
-    [12.5, [255, 205, 121]],
-    [25,   [255, 227, 143]],
-    [37.5, [255, 183, 106]],
-    [50,   [255, 149,  89]],
-    [62.5, [243, 111,  79]],
-    [75,   [226,  93, 122]],
-    [87.5, [123,  91, 176]],
-    [100,  [ 47,  58, 102]]
-  ];
-
-  function getSunColor(pct) {
-    for (let i = 0; i < SUN_STOPS.length - 1; i++) {
-      const [p0, c0] = SUN_STOPS[i];
-      const [p1, c1] = SUN_STOPS[i + 1];
-      if (pct <= p1) {
-        const t = (pct - p0) / (p1 - p0);
-        const [r, g, b] = lerpColor(c0, c1, t);
-        return `rgb(${r},${g},${b})`;
-      }
-    }
-    return 'rgb(47,58,102)';
-  }
-
   function fmtHM(totalHours) {
     const h = Math.floor(totalHours);
     const m = Math.round((totalHours - h) * 60);
@@ -1429,7 +1404,13 @@
       const pct = (hours - WAKE_HOUR) / (SLEEP_HOUR - WAKE_HOUR) * 100;
       const offset = C * (1 - pct / 100);
       fill.style.strokeDashoffset = offset;
-      fill.setAttribute('stroke', getSunColor(pct));
+      // Rotate the gradient so it always flows from arc-start (top) toward
+      // the current arc tip — colour naturally blends dawn→midday→afternoon→evening.
+      const tipRad = (-90 + pct / 100 * 360) * Math.PI / 180;
+      const grad = document.getElementById('ringGrad');
+      grad.setAttribute('x2', (60 + 52 * Math.cos(tipRad)).toFixed(2));
+      grad.setAttribute('y2', (60 + 52 * Math.sin(tipRad)).toFixed(2));
+      fill.setAttribute('stroke', 'url(#ringGrad)');
       pctEl.textContent = Math.round(pct) + '%';
 
       let phase, status;
@@ -1552,8 +1533,8 @@
 
   // ── Supabase sync ─────────────────────────────────────────────────────────
   (function () {
-    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-    const SUPABASE_KEY = 'YOUR_SUPABASE_KEY';
+    const SUPABASE_URL = 'https://jbyupvkkegpwyrsvudve.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_pMt-LvW6Qi5yuFEnpq--nw_eBOko0Bz';
     const APP_KEY = 'dashboard';
 
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);

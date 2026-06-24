@@ -91,6 +91,15 @@ body::after {
   pointer-events: none;
 }
 
+.section-title {
+  margin-bottom: 12px;
+}
+.section-title-text {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
 /* Bottom tab bar */
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
@@ -146,7 +155,7 @@ body::after {
 }
 .barber-stat-sub { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
 .barber-stat-num.green { color:#6BE3A4; }
-/* Log session form */
+
 .barber-form { display:flex; flex-direction:column; gap:10px; }
 .barber-form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 @media(max-width:480px){ .barber-form-row { grid-template-columns:1fr; } }
@@ -154,7 +163,6 @@ body::after {
   display:block; font-size:10px; color:var(--text-tertiary); text-transform:uppercase;
   letter-spacing:0.14em; font-weight:700; font-family:var(--font-mono); margin-bottom:6px;
 }
-/* Date input */
 .barber-date-input {
   width:100%; padding:12px 14px;
   background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
@@ -164,7 +172,6 @@ body::after {
   -webkit-tap-highlight-color: transparent;
 }
 .barber-date-input:focus { outline:none; border-color:rgba(110,231,183,0.5); }
-/* Haircut stepper */
 .barber-stepper {
   display:flex; align-items:center; justify-content:space-between;
   background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
@@ -186,7 +193,6 @@ body::after {
   color:var(--text-primary); font-variant-numeric:tabular-nums;
   pointer-events:none; user-select:none;
 }
-/* Price input */
 .barber-price-wrap {
   display:flex; align-items:center;
   background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
@@ -206,7 +212,6 @@ body::after {
 .barber-price-input::-webkit-outer-spin-button,
 .barber-price-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
 .barber-price-wrap:focus-within { border-color:rgba(110,231,183,0.5); }
-/* Log button */
 .barber-add-btn {
   width:100%; padding:15px;
   background:linear-gradient(180deg,#6EE7B7,#4ED4A0); color:#04201A;
@@ -263,18 +268,20 @@ body::after {
   text-align:center; padding:24px 0;
   font-size:12px; color:var(--text-tertiary); font-style:italic;
 }
-
+.chart-wrap {
+  position:relative; width:100%; height:160px; margin-top:4px;
+}
+.chart-wrap svg { width:100%; height:100%; display:block; }
+.chart-empty {
+  position:absolute; inset:0; display:none;
+  align-items:center; justify-content:center;
+  font-size:12px; color:var(--text-tertiary); font-style:italic;
+}
 </style>
 </head>
 <body>
 <div class="shell">
-<div class="page-title">Barbering Income</div>
-
-<!-- ===== BARBERING INCOME ===== -->
-<div class="section" id="barberSection" style="margin-top:28px">
-  <div class="section-title">
-    <span class="section-title-text">BARBERING INCOME</span>
-  </div>
+  <div class="page-title">Barbering Income</div>
 
   <!-- Hero stats -->
   <div class="card" style="background:linear-gradient(135deg,rgba(107,227,164,0.08),rgba(110,231,183,0.04));border:1px solid rgba(107,227,164,0.18)">
@@ -298,46 +305,49 @@ body::after {
   </div>
 
   <!-- Chart -->
-  <div class="card" style="margin-top:10px;padding:14px 16px 10px">
-    <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.14em;font-weight:700;font-family:var(--font-mono);margin-bottom:10px">Weekly Earnings</div>
-    <svg id="barberChartSvg" width="100%" viewBox="0 0 600 160" style="display:block;overflow:visible"></svg>
-    <div id="barberChartEmpty" style="display:none;align-items:center;justify-content:center;height:80px;font-size:12px;color:var(--text-tertiary);font-style:italic">Log a session to see your chart</div>
+  <div class="card">
+    <div class="section-title"><span class="section-title-text">Weekly Earnings</span></div>
+    <div class="chart-wrap">
+      <svg id="barberChartSvg" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
+      <div class="chart-empty" id="barberChartEmpty">Log a session to see your chart</div>
+    </div>
   </div>
 
   <!-- Log session form -->
-  <div class="card" style="margin-top:10px">
-    <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.14em;font-weight:700;font-family:var(--font-mono);margin-bottom:14px">Log Session</div>
+  <div class="card">
+    <div class="section-title"><span class="section-title-text">Log Session</span></div>
     <div class="barber-form">
       <div class="barber-form-row">
         <div>
           <label class="barber-label">Date</label>
-          <input type="date" id="barberDate" class="barber-date-input">
+          <input type="date" class="barber-date-input" id="barberDate">
         </div>
         <div>
-          <label class="barber-label">Haircuts</label>
-          <div class="barber-stepper">
-            <button class="barber-stepper-btn" id="barberCutsDown">−</button>
-            <span class="barber-stepper-val" id="barberCutsDisplay">0</span>
-            <button class="barber-stepper-btn" id="barberCutsUp">+</button>
+          <label class="barber-label">Price Per Cut</label>
+          <div class="barber-price-wrap">
+            <span class="barber-price-symbol">$</span>
+            <input type="number" class="barber-price-input" id="barberPrice" placeholder="0" min="0" step="0.01">
           </div>
         </div>
       </div>
       <div>
-        <label class="barber-label">Price per cut</label>
-        <div class="barber-price-wrap">
-          <span class="barber-price-symbol">$</span>
-          <input type="number" id="barberPrice" class="barber-price-input" placeholder="0" min="0" step="0.01">
+        <label class="barber-label">Haircuts</label>
+        <div class="barber-stepper">
+          <button class="barber-stepper-btn" id="barberCutsDown">−</button>
+          <span class="barber-stepper-val" id="barberCutsDisplay">0</span>
+          <button class="barber-stepper-btn" id="barberCutsUp">+</button>
         </div>
       </div>
-      <div id="barberPreview" class="barber-preview"></div>
+      <div class="barber-preview" id="barberPreview"></div>
       <button class="barber-add-btn" id="barberAddBtn">Log Session</button>
     </div>
   </div>
 
   <!-- Session log -->
-  <div id="barberLog" style="margin-top:10px"></div>
-
-</div>
+  <div class="card">
+    <div class="section-title"><span class="section-title-text">Session Log</span></div>
+    <div id="barberLog"></div>
+  </div>
 </div>
 
 <nav class="tabbar" aria-label="Main navigation">
@@ -379,27 +389,20 @@ body::after {
   </div>
 </nav>
 
-</body>
-</html>
-
 <script>
 (function() {
   function storeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
   function storeSet(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 
-  // BARBERING INCOME
-  // ============================================================
   const BARBER_KEY = 'barber:sessions';
-
   function getBarberSessions() { return storeGet(BARBER_KEY) || []; }
   function saveBarberSessions(arr) { storeSet(BARBER_KEY, arr); }
 
   function isoWeekKey(dateStr) {
-    // ISO 8601 week: week containing Thursday; week 1 = week with Jan 4
     const d = new Date(dateStr + 'T12:00:00');
     const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    const dow = tmp.getUTCDay() || 7; // Mon=1, Sun=7
-    tmp.setUTCDate(tmp.getUTCDate() + 4 - dow); // nearest Thursday
+    const dow = tmp.getUTCDay() || 7;
+    tmp.setUTCDate(tmp.getUTCDate() + 4 - dow);
     const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
     const wk = Math.ceil(((tmp - yearStart) / 86400000 + 1) / 7);
     return tmp.getUTCFullYear() + '-W' + String(wk).padStart(2, '0');
@@ -411,7 +414,6 @@ body::after {
 
   function nextWeekKey(wkKey) {
     const [yr, w] = wkKey.split('-W').map(Number);
-    // Find the Monday of that week, advance 7 days
     const jan4 = new Date(Date.UTC(yr, 0, 4));
     const dow = jan4.getUTCDay() || 7;
     const monday = new Date(jan4);
@@ -597,7 +599,6 @@ body::after {
     });
   }
 
-  // ---- Log session form ----
   const barberDateEl    = document.getElementById('barberDate');
   const barberPriceEl   = document.getElementById('barberPrice');
   const barberPreviewEl = document.getElementById('barberPreview');
@@ -634,7 +635,6 @@ body::after {
     const cuts = barberCutsCount;
     const price = parseFloat(barberPriceEl.value) || 0;
     if (!date || cuts < 1 || price <= 0) {
-      // Shake the relevant fields if missing values
       if (cuts < 1) barberCutsDisplayEl.closest('.barber-stepper').style.borderColor = '#FF8A8A';
       if (price <= 0) barberPriceEl.closest('.barber-price-wrap').style.borderColor = '#FF8A8A';
       setTimeout(() => {
@@ -657,7 +657,6 @@ body::after {
   });
 
   renderBarber();
-
 })();
 </script>
 </body>

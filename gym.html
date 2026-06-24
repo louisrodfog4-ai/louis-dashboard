@@ -1287,6 +1287,126 @@ img, video, canvas, svg { max-width: 100%; }
 }
 
 .hidden { display: none !important; }
+
+/* ============================================================
+   PPL WORKOUT TRACKER
+   ============================================================ */
+.ppl-section { margin-bottom: 20px; }
+.ppl-divider {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-3); margin-bottom: 12px;
+}
+.ppl-divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.07), transparent);
+}
+.ppl-picker { display: flex; gap: 8px; margin-bottom: 12px; }
+.ppl-picker-btn {
+  flex: 1; padding: 11px 8px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px; color: var(--text-2);
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.10em; text-transform: uppercase; cursor: pointer;
+  transition: background 0.14s, border-color 0.14s, color 0.14s;
+  -webkit-tap-highlight-color: transparent;
+}
+.ppl-picker-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-1); }
+.ppl-picker-btn.active {
+  background: rgba(110,231,183,0.10); border-color: rgba(110,231,183,0.35);
+  color: var(--good);
+}
+.ppl-workout { display: none; flex-direction: column; gap: 8px; }
+.ppl-workout.visible { display: flex; }
+.ppl-exercise {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden;
+  transition: border-color 0.2s;
+}
+.ppl-exercise.complete { border-color: rgba(110,231,183,0.22); }
+.ppl-ex-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 14px 11px;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.ppl-ex-info { flex: 1; min-width: 0; }
+.ppl-ex-name { font-size: 14px; font-weight: 600; color: var(--text-1); line-height: 1.2; }
+.ppl-exercise.complete .ppl-ex-name { color: var(--good); }
+.ppl-ex-rx {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-3);
+  margin-top: 2px; letter-spacing: 0.04em;
+}
+.ppl-ex-wt-btn {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  color: var(--text-2); background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10); border-radius: 8px;
+  padding: 5px 10px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.ppl-ex-wt-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.22); }
+.ppl-ex-wt-btn.is-set { color: var(--text-1); }
+.ppl-ex-wt-input {
+  width: 72px; padding: 5px 8px; text-align: center;
+  background: rgba(0,0,0,0.35); border: 1px solid rgba(110,231,183,0.45);
+  border-radius: 8px; color: var(--text-1);
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  flex-shrink: 0;
+}
+.ppl-ex-wt-input:focus { outline: none; border-color: var(--good); }
+.ppl-ex-chevron {
+  color: var(--text-3); font-size: 10px; flex-shrink: 0;
+  transition: transform 0.2s; pointer-events: none;
+}
+.ppl-exercise.open .ppl-ex-chevron { transform: rotate(180deg); }
+.ppl-sets { display: none; padding: 0 14px 14px; flex-direction: column; gap: 6px; }
+.ppl-exercise.open .ppl-sets { display: flex; }
+.ppl-set-labels {
+  display: grid; grid-template-columns: 26px 1fr 1fr 34px;
+  gap: 6px; padding-bottom: 2px;
+}
+.ppl-set-label {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3);
+  text-align: center;
+}
+.ppl-set-row { display: grid; grid-template-columns: 26px 1fr 1fr 34px; gap: 6px; align-items: center; }
+.ppl-set-num {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  color: var(--text-3); text-align: center; letter-spacing: 0.06em;
+}
+.ppl-set-input {
+  padding: 9px 6px; text-align: center;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 9px; color: var(--text-1);
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  font-variant-numeric: tabular-nums; width: 100%;
+  transition: border-color 0.15s;
+}
+.ppl-set-input:focus { outline: none; border-color: rgba(255,255,255,0.28); }
+.ppl-set-input.done { border-color: rgba(110,231,183,0.20); color: var(--good); }
+.ppl-set-check {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.ppl-set-check:hover { background: rgba(255,255,255,0.09); }
+.ppl-set-check.checked {
+  background: rgba(110,231,183,0.14); border-color: rgba(110,231,183,0.50);
+  color: var(--good);
+}
+.ppl-ex-reset {
+  margin-top: 8px; padding: 7px; width: 100%;
+  background: transparent; border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px; color: var(--text-3);
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.10em; text-transform: uppercase; cursor: pointer;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.ppl-ex-reset:hover { color: var(--bad); border-color: rgba(255,138,138,0.25); background: rgba(255,138,138,0.05); }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="topbar.js" defer></script>
@@ -1299,6 +1419,17 @@ img, video, canvas, svg { max-width: 100%; }
     <span class="po-day-sep">·</span>
     <span class="po-day-split" id="dayPillSplit">—</span>
   </button>
+
+  <!-- PPL WORKOUT TRACKER -->
+  <div class="ppl-section">
+    <div class="ppl-divider"><span>TODAY'S WORKOUT</span></div>
+    <div class="ppl-picker">
+      <button class="ppl-picker-btn" data-split="push" type="button">Push</button>
+      <button class="ppl-picker-btn" data-split="pull" type="button">Pull</button>
+      <button class="ppl-picker-btn" data-split="legs" type="button">Legs</button>
+    </div>
+    <div class="ppl-workout" id="pplWorkout"></div>
+  </div>
 
   <!-- WEIGHT + PROGRESS PHOTOS -->
   <div class="wt-section">
@@ -3713,6 +3844,212 @@ img, video, canvas, svg { max-width: 100%; }
   // Reposition on scroll/resize
   window.addEventListener('scroll', acPosition, true);
   window.addEventListener('resize', acPosition);
+
+  // ============================================================
+  // PPL WORKOUT TRACKER
+  // ============================================================
+  const PPL = {
+    push: [
+      { id: 'bench',     name: 'Bench press',               sets: 3, reps: 8  },
+      { id: 'inclineDB', name: 'Incline dumbbell press',    sets: 3, reps: 10 },
+      { id: 'pecDec',    name: 'Pec dec',                   sets: 3, reps: 12 },
+      { id: 'tricepPD',  name: 'Tricep pushdown',           sets: 3, reps: 12 },
+      { id: 'triOHE',    name: 'Overhead tricep extension', sets: 3, reps: 12 },
+      { id: 'latRaise',  name: 'Lateral raises',            sets: 3, reps: 15 },
+    ],
+    pull: [
+      { id: 'latPD',    name: 'Lat pulldown',  sets: 3, reps: 10 },
+      { id: 'tbarRow',  name: 'T-bar row',     sets: 3, reps: 8  },
+      { id: 'preacher', name: 'Preacher curl', sets: 3, reps: 10 },
+      { id: 'bicep',    name: 'Bicep curls',   sets: 3, reps: 12 },
+    ],
+    legs: [
+      { id: 'jerks',    name: 'Jerks',               sets: 3, reps: 6  },
+      { id: 'rdl',      name: 'Romanian deadlift',   sets: 3, reps: 8  },
+      { id: 'legExt',   name: 'Leg extensions',      sets: 3, reps: 12 },
+      { id: 'adductor', name: 'Adductors',           sets: 3, reps: 15 },
+      { id: 'legPress', name: 'Leg press',           sets: 3, reps: 10 },
+      { id: 'calf',     name: 'Calf raises',         sets: 4, reps: 15 },
+    ],
+  };
+
+  const PPL_TARGETS_KEY = 'ppl:targets';
+  const pplDateKey = () => 'ppl:log:' + new Date().toISOString().slice(0, 10);
+
+  function pplGetTargets()  { try { return JSON.parse(localStorage.getItem(PPL_TARGETS_KEY) || '{}'); } catch { return {}; } }
+  function pplSaveTargets(t){ localStorage.setItem(PPL_TARGETS_KEY, JSON.stringify(t)); }
+  function pplGetLog()      { try { return JSON.parse(localStorage.getItem(pplDateKey()) || '{"split":null,"ex":{}}'); } catch { return {split:null,ex:{}}; } }
+  function pplSaveLog(l)    { localStorage.setItem(pplDateKey(), JSON.stringify(l)); }
+
+  let pplSplit = pplGetLog().split || null;
+
+  function pplRender(keepOpenId) {
+    const container = document.getElementById('pplWorkout');
+    if (!pplSplit) { container.classList.remove('visible'); return; }
+
+    const exercises = PPL[pplSplit];
+    const targets   = pplGetTargets();
+    const log       = pplGetLog();
+
+    container.classList.add('visible');
+    container.innerHTML = '';
+
+    exercises.forEach(ex => {
+      const sets   = log.ex[ex.id] || Array.from({length: ex.sets}, () => ({w:'', r:'', done:false}));
+      const targetW = targets[ex.id] != null ? targets[ex.id] : '';
+      const allDone = sets.length > 0 && sets.every(s => s.done);
+      const shouldOpen = ex.id === keepOpenId;
+
+      const card = document.createElement('div');
+      card.className = 'ppl-exercise' + (allDone ? ' complete' : '') + (shouldOpen ? ' open' : '');
+      card.dataset.exid = ex.id;
+
+      card.innerHTML = `
+        <div class="ppl-ex-header">
+          <div class="ppl-ex-info">
+            <div class="ppl-ex-name">${ex.name}${allDone ? ' ✓' : ''}</div>
+            <div class="ppl-ex-rx">${ex.sets} × ${ex.reps} reps</div>
+          </div>
+          <button class="ppl-ex-wt-btn${targetW !== '' ? ' is-set' : ''}" type="button" title="Set target weight">
+            ${targetW !== '' ? targetW + ' kg' : '— kg'}
+          </button>
+          <span class="ppl-ex-chevron">▾</span>
+        </div>
+        <div class="ppl-sets">
+          <div class="ppl-set-labels">
+            <div></div>
+            <div class="ppl-set-label">kg</div>
+            <div class="ppl-set-label">reps</div>
+            <div></div>
+          </div>
+          ${sets.map((s, i) => `
+            <div class="ppl-set-row" data-set="${i}">
+              <div class="ppl-set-num">S${i+1}</div>
+              <input class="ppl-set-input${s.done ? ' done' : ''}" type="number" inputmode="decimal"
+                     placeholder="${targetW !== '' ? targetW : '—'}" value="${s.w}"
+                     data-field="w" data-set="${i}" min="0" step="0.5">
+              <input class="ppl-set-input${s.done ? ' done' : ''}" type="number" inputmode="numeric"
+                     placeholder="${ex.reps}" value="${s.r}"
+                     data-field="r" data-set="${i}" min="0">
+              <div class="ppl-set-check${s.done ? ' checked' : ''}" data-action="check" data-set="${i}">
+                ${s.done ? '✓' : ''}
+              </div>
+            </div>`).join('')}
+          <button class="ppl-ex-reset" type="button" data-action="reset">Reset sets</button>
+        </div>`;
+
+      container.appendChild(card);
+    });
+
+    // Toggle open/close on header tap
+    container.querySelectorAll('.ppl-ex-header').forEach(header => {
+      header.addEventListener('click', e => {
+        if (e.target.closest('.ppl-ex-wt-btn')) return; // handled separately
+        header.closest('.ppl-exercise').classList.toggle('open');
+      });
+    });
+
+    // Inline target-weight edit
+    container.querySelectorAll('.ppl-ex-wt-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const card  = btn.closest('.ppl-exercise');
+        const exId  = card.dataset.exid;
+        const isOpen = card.classList.contains('open');
+        const cur   = pplGetTargets()[exId] ?? '';
+
+        const inp = document.createElement('input');
+        inp.className   = 'ppl-ex-wt-input';
+        inp.type        = 'number';
+        inp.inputMode   = 'decimal';
+        inp.placeholder = '0';
+        inp.value       = cur;
+        inp.min         = '0';
+        inp.step        = '0.5';
+        btn.replaceWith(inp);
+        inp.focus(); inp.select();
+
+        const commit = () => {
+          const n = parseFloat(inp.value);
+          if (!isNaN(n) && n >= 0) {
+            const t = pplGetTargets();
+            t[exId] = n;
+            pplSaveTargets(t);
+          }
+          pplRender(isOpen ? exId : null);
+        };
+        inp.addEventListener('blur', commit);
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter')  { inp.blur(); }
+          if (e.key === 'Escape') { pplRender(isOpen ? exId : null); }
+        });
+      });
+    });
+
+    // Check/uncheck a set
+    container.querySelectorAll('[data-action="check"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card  = btn.closest('.ppl-exercise');
+        const exId  = card.dataset.exid;
+        const idx   = parseInt(btn.dataset.set);
+        const l     = pplGetLog();
+        const ex    = PPL[pplSplit].find(e => e.id === exId);
+        if (!l.ex[exId]) l.ex[exId] = Array.from({length: ex.sets}, () => ({w:'',r:'',done:false}));
+
+        // Snapshot current input values before re-render
+        const row   = btn.closest('.ppl-set-row');
+        const wVal  = row.querySelector('[data-field="w"]').value;
+        const rVal  = row.querySelector('[data-field="r"]').value;
+        if (wVal) l.ex[exId][idx].w = wVal;
+        if (rVal) l.ex[exId][idx].r = rVal;
+        l.ex[exId][idx].done = !l.ex[exId][idx].done;
+        pplSaveLog(l);
+        pplRender(exId);
+      });
+    });
+
+    // Save input values on change
+    container.querySelectorAll('.ppl-set-input').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const card  = inp.closest('.ppl-exercise');
+        const exId  = card.dataset.exid;
+        const idx   = parseInt(inp.dataset.set);
+        const field = inp.dataset.field;
+        const l     = pplGetLog();
+        const ex    = PPL[pplSplit].find(e => e.id === exId);
+        if (!l.ex[exId]) l.ex[exId] = Array.from({length: ex.sets}, () => ({w:'',r:'',done:false}));
+        l.ex[exId][idx][field] = inp.value;
+        pplSaveLog(l);
+      });
+    });
+
+    // Reset a single exercise
+    container.querySelectorAll('[data-action="reset"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const exId = btn.closest('.ppl-exercise').dataset.exid;
+        const l = pplGetLog();
+        delete l.ex[exId];
+        pplSaveLog(l);
+        pplRender(exId);
+      });
+    });
+  }
+
+  // Split picker
+  document.querySelectorAll('.ppl-picker-btn').forEach(btn => {
+    if (btn.dataset.split === pplSplit) btn.classList.add('active');
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ppl-picker-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      pplSplit = btn.dataset.split;
+      const l = pplGetLog();
+      l.split = pplSplit;
+      pplSaveLog(l);
+      pplRender();
+    });
+  });
+
+  pplRender();
 
 })();
 </script>
