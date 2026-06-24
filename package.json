@@ -1,0 +1,7 @@
+{
+  "name": "louis-dashboard",
+  "version": "1.0.0",
+  "dependencies": {
+    "garmin-connect": "^1.6.2"
+  }
+}

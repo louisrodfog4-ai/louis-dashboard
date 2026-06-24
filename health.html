@@ -1073,12 +1073,6 @@ function renderGarminData(d) {
 }
 
 async function syncGarmin() {
-  const apiKey = storeGet(API_KEY_STORAGE);
-  if (!apiKey) {
-    document.getElementById('garminError').textContent = 'Add your Anthropic API key in the Garmin Sync Settings section below.';
-    document.getElementById('garminError').classList.remove('hidden');
-    return;
-  }
   document.getElementById('garminError').classList.add('hidden');
   document.getElementById('garminStaleNotice').classList.add('hidden');
 
@@ -1088,84 +1082,21 @@ async function syncGarmin() {
   document.getElementById('todaysCallText').className = 'call-text loading';
   document.getElementById('garminLastSync').textContent = 'Syncing…';
 
-  const today = new Date().toISOString().slice(0, 10);
-
-  const prompt = `You have access to Garmin health data via MCP tools. Fetch all available health metrics for today (${today}) or the most recent available date.
-
-Fetch: body battery (current/max/min), sleep (score, duration in hours, stages in hours: deep/rem/light/awake), HRV (value in ms, status), resting heart rate, stress (average 0-100), SpO2 (average %), respiration rate, steps (count and goal), active calories, active minutes, distance in meters, training readiness score.
-
-Based on the data, write a single sentence "Today's Call" — a clear, actionable recommendation (e.g. "Good recovery — push hard in training today" or "Low body battery — prioritise rest and light activity only").
-
-Return ONLY valid JSON, no markdown fences, no explanation. Use this exact structure:
-{
-  "bodyBattery": {"current": number, "max": number, "min": number},
-  "sleep": {"score": number, "hours": number, "stages": {"deep": number, "rem": number, "light": number, "awake": number}},
-  "hrv": {"value": number, "status": "string"},
-  "restingHeartRate": number,
-  "stress": {"avg": number},
-  "spo2": {"avg": number},
-  "respiration": {"avg": number},
-  "steps": {"count": number, "goal": number},
-  "activeCalories": number,
-  "activeMinutes": number,
-  "distance": number,
-  "trainingReadiness": {"score": number},
-  "todayCall": "string",
-  "fetchedAt": "${new Date().toISOString()}"
-}
-Use null for any field that is unavailable.`;
-
-  const abortCtrl = new AbortController();
-  const timeoutId = setTimeout(() => abortCtrl.abort(), 120000);
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      signal: abortCtrl.signal,
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'mcp-client-2025-04-04',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        mcp_servers: [{
-          type: 'url',
-          url: GARMIN_MCP_URL,
-          name: 'garmin'
-        }],
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    clearTimeout(timeoutId);
-
-    if (!res.ok) {
-      const errBody = await res.text();
-      throw new Error('API ' + res.status + ': ' + errBody.slice(0, 200));
-    }
-
+    const res = await fetch('/api/garmin');
     const data = await res.json();
-    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
 
-    // Extract JSON from response (Claude might include surrounding text)
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('No JSON found in response. Response: ' + text.slice(0, 300));
+    if (!res.ok) throw new Error(data.error || 'Server error ' + res.status);
 
-    const garminData = JSON.parse(jsonMatch[0]);
-    garminData.fetchedAt = garminData.fetchedAt || new Date().toISOString();
-
-    storeSet(GARMIN_CACHE_KEY, garminData);
-    renderGarminData(garminData);
+    data.fetchedAt = data.fetchedAt || new Date().toISOString();
+    storeSet(GARMIN_CACHE_KEY, data);
+    renderGarminData(data);
 
   } catch (err) {
-    clearTimeout(timeoutId);
     console.error('Garmin sync error:', err);
-    const msg = err.name === 'AbortError' ? 'Sync timed out — Garmin MCP server took too long. Try again.' : 'Sync failed: ' + err.message;
-    document.getElementById('garminError').textContent = msg;
+    document.getElementById('garminError').textContent = 'Sync failed: ' + err.message;
     document.getElementById('garminError').classList.remove('hidden');
-    document.getElementById('todaysCallText').textContent = 'Sync failed — check your API key and try again.';
+    document.getElementById('todaysCallText').textContent = 'Sync failed — try again.';
     document.getElementById('todaysCallText').className = 'call-text loading';
     document.getElementById('garminLastSync').textContent = 'Sync failed';
   } finally {
