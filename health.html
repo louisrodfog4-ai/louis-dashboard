@@ -949,11 +949,16 @@ function fmtHours(h) {
   return hrs + 'h ' + mins + 'm';
 }
 
+function safeNum(v) {
+  var n = Number(v);
+  return isFinite(n) ? n : null;
+}
+
 function renderGarminData(d) {
   if (!d) return;
 
   // Body battery ring
-  const bb = d.bodyBattery?.current ?? d.bodyBattery;
+  const bb = safeNum(d.bodyBattery?.current ?? d.bodyBattery);
   if (bb != null) {
     document.getElementById('bbNum').textContent = Math.round(bb);
     const arc = Math.max(0, Math.min(1, bb / 100)) * BB_ARC;
@@ -963,7 +968,7 @@ function renderGarminData(d) {
   }
 
   // Training readiness
-  const tr = d.trainingReadiness?.score ?? d.trainingReadiness;
+  const tr = safeNum(d.trainingReadiness?.score ?? d.trainingReadiness);
   const trEl = document.getElementById('trVal');
   if (tr != null) {
     trEl.textContent = Math.round(tr);
@@ -971,7 +976,7 @@ function renderGarminData(d) {
   }
 
   // HRV
-  const hrv = d.hrv?.value ?? d.hrv;
+  const hrv = safeNum(d.hrv?.value ?? d.hrv);
   const hrvStatus = d.hrv?.status;
   const hrvEl = document.getElementById('hrvVal');
   if (hrv != null) {
@@ -980,13 +985,13 @@ function renderGarminData(d) {
   }
 
   // Resting HR
-  const rhr = d.restingHeartRate ?? d.rhr;
+  const rhr = safeNum(d.restingHeartRate ?? d.rhr);
   if (rhr != null) {
     document.getElementById('rhrVal').textContent = Math.round(rhr) + ' bpm';
   }
 
   // Stress
-  const stress = d.stress?.avg ?? d.stress;
+  const stress = safeNum(d.stress?.avg ?? d.stress);
   const stressEl = document.getElementById('stressVal');
   const stressSubEl = document.getElementById('stressSub');
   if (stress != null) {
@@ -996,7 +1001,7 @@ function renderGarminData(d) {
   }
 
   // SpO2
-  const spo2 = d.spo2?.avg ?? d.spo2;
+  const spo2 = safeNum(d.spo2?.avg ?? d.spo2);
   const spo2El = document.getElementById('spo2Val');
   if (spo2 != null) {
     spo2El.textContent = Math.round(spo2) + '%';
@@ -1004,7 +1009,7 @@ function renderGarminData(d) {
   }
 
   // Respiration
-  const resp = d.respiration?.avg ?? d.respiration;
+  const resp = safeNum(d.respiration?.avg ?? d.respiration);
   if (resp != null) {
     document.getElementById('respVal').textContent = Math.round(resp);
   }
