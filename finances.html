@@ -1132,8 +1132,8 @@ function updatePortfolioTotals() {
                       + Object.values(HOLDINGS_CFG).reduce((s, h) => s + h.putInNZD, 0);
   let totalValue;
 
-  if (syncData && Object.keys(liveValuesNZD).length > 0) {
-    // Sync mode: Sharesies total + live delta from exchange-traded holdings
+  if (syncData) {
+    // Sync mode: always use Sharesies total + live delta (delta = 0 if prices not yet loaded)
     let delta = 0;
     Object.entries(HOLDINGS_CFG).forEach(([id]) => {
       const cur  = liveValuesNZD[id];
@@ -1142,9 +1142,9 @@ function updatePortfolioTotals() {
     });
     totalValue = syncData.total + delta;
 
-    // Delta line
+    // Delta line — only show once live prices are available
     const deltaEl = document.getElementById('sync-delta-line');
-    if (deltaEl) {
+    if (deltaEl && Object.keys(liveValuesNZD).length > 0) {
       const sign = delta >= 0 ? '+' : '';
       const col  = delta >= 0 ? '#6EE7B7' : '#FF8A8A';
       deltaEl.style.display = 'block';
@@ -1152,7 +1152,7 @@ function updatePortfolioTotals() {
         + sign + fmtNZD(delta) + ' NZD</span> · live moves on BLK, RKLB, VAS, VESG';
     }
   } else {
-    // Fallback: calculated from units × live price
+    // No sync yet — fallback calculated total
     totalValue = Object.values(STATIC_HOLDINGS).reduce((s, h) => s + h.valueNZD, 0)
                + Object.values(liveValuesNZD).reduce((s, v) => s + v, 0);
   }
