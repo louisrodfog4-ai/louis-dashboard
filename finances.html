@@ -621,7 +621,7 @@ body::after {
   <div class="card" style="margin-top:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:0;padding:0;overflow:hidden">
     <div style="padding:14px 16px;border-right:1px solid rgba(255,255,255,0.06)">
       <div style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono);margin-bottom:4px">Invested</div>
-      <div style="font-size:16px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums" id="portfolio-invested">$11,137</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary);font-variant-numeric:tabular-nums" id="portfolio-invested">$11,531</div>
     </div>
     <div style="padding:14px 16px;border-right:1px solid rgba(255,255,255,0.06)">
       <div style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono);margin-bottom:4px">Gain</div>
@@ -1067,10 +1067,11 @@ body::after {
 // ============================================================
 const HOLDINGS_CFG = {
   // Exchange-traded: get live prices from Yahoo Finance
-  BLK:  { units: 0.01566686,  putInNZD: 17.89,   ySymbol: 'BLK',     fxSymbol: 'NZDUSD=X', fxMode: 'div', nativeCur: 'USD' },
-  RKLB: { units: 0.56868022,  putInNZD: 63.51,   ySymbol: 'RKLB',    fxSymbol: 'NZDUSD=X', fxMode: 'div', nativeCur: 'USD' },
-  VAS:  { units: 14.07916953, putInNZD: 1380.10,  ySymbol: 'VAS.AX',  fxSymbol: 'AUDNZD=X', fxMode: 'mul', nativeCur: 'AUD' },
-  VESG: { units: 24.69856591, putInNZD: 2200.83,  ySymbol: 'VESG.AX', fxSymbol: 'AUDNZD=X', fxMode: 'mul', nativeCur: 'AUD' },
+  // putInNZD = Sharesies "amount put in" converted to NZD at time of purchase (approximate)
+  BLK:  { units: 0.01566686,  putInNZD: 29.57,   ySymbol: 'BLK',     fxSymbol: 'NZDUSD=X', fxMode: 'div', nativeCur: 'USD' },
+  RKLB: { units: 0.56868022,  putInNZD: 104.97,  ySymbol: 'RKLB',    fxSymbol: 'NZDUSD=X', fxMode: 'div', nativeCur: 'USD' },
+  VAS:  { units: 14.07916953, putInNZD: 1518.11,  ySymbol: 'VAS.AX',  fxSymbol: 'AUDNZD=X', fxMode: 'mul', nativeCur: 'AUD' },
+  VESG: { units: 24.69856591, putInNZD: 2420.91,  ySymbol: 'VESG.AX', fxSymbol: 'AUDNZD=X', fxMode: 'mul', nativeCur: 'AUD' },
 };
 
 // Static NZX managed funds (update at most once daily — no live price feed)
@@ -1078,7 +1079,7 @@ const STATIC_HOLDINGS = {
   MERC: { valueNZD: 3898.26, putInNZD: 2931.00 },
   PFGR: { valueNZD: 3078.68, putInNZD: 2226.50 },
   PFWT: { valueNZD: 1002.29, putInNZD: 868.50  },
-  SMRT: { valueNZD: 1458.24, putInNZD: 1315.55 }, // 9.85% return = $142.69 / $1,448.38; market value only
+  SMRT: { valueNZD: 1458.24, putInNZD: 1448.38 },
 };
 
 // Cache live values so portfolio total stays consistent
