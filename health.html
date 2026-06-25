@@ -706,54 +706,6 @@ main {
 
   </section>
 
-  <!-- ===== SLEEP ===== -->
-  <section class="section">
-    <div class="section-title">Sleep</div>
-    <div class="card">
-      <div class="sleep-grid">
-        <div class="sleep-score-wrap">
-          <div class="sleep-score-num" id="sleepScore">—</div>
-          <div class="sleep-score-sub">Score</div>
-          <div class="sleep-duration" id="sleepDuration">—</div>
-        </div>
-        <div class="sleep-stages">
-          <div class="sleep-stage-row">
-            <div class="sleep-stage-dot" style="background:#6366F1"></div>
-            <div class="sleep-stage-name">Deep</div>
-            <div class="sleep-stage-bar-wrap">
-              <div class="sleep-stage-bar" id="deepBar" style="width:0%;background:#6366F1"></div>
-            </div>
-            <div class="sleep-stage-dur" id="deepDur">—</div>
-          </div>
-          <div class="sleep-stage-row">
-            <div class="sleep-stage-dot" style="background:#8B5CF6"></div>
-            <div class="sleep-stage-name">REM</div>
-            <div class="sleep-stage-bar-wrap">
-              <div class="sleep-stage-bar" id="remBar" style="width:0%;background:#8B5CF6"></div>
-            </div>
-            <div class="sleep-stage-dur" id="remDur">—</div>
-          </div>
-          <div class="sleep-stage-row">
-            <div class="sleep-stage-dot" style="background:#60A5FA"></div>
-            <div class="sleep-stage-name">Light</div>
-            <div class="sleep-stage-bar-wrap">
-              <div class="sleep-stage-bar" id="lightBar" style="width:0%;background:#60A5FA"></div>
-            </div>
-            <div class="sleep-stage-dur" id="lightDur">—</div>
-          </div>
-          <div class="sleep-stage-row">
-            <div class="sleep-stage-dot" style="background:rgba(255,255,255,0.2)"></div>
-            <div class="sleep-stage-name">Awake</div>
-            <div class="sleep-stage-bar-wrap">
-              <div class="sleep-stage-bar" id="awakeBar" style="width:0%;background:rgba(255,255,255,0.2)"></div>
-            </div>
-            <div class="sleep-stage-dur" id="awakeDur">—</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- ===== ACTIVITY ===== -->
   <section class="section">
     <div class="section-title">Activity</div>
@@ -1008,25 +960,6 @@ function renderGarminData(d) {
   const resp = safeNum(d.respiration?.avg ?? d.respiration);
   if (resp != null && resp > 0) {
     document.getElementById('respVal').textContent = Math.round(resp);
-  }
-
-  // Sleep
-  const sleep = d.sleep;
-  if (sleep) {
-    const score = sleep.score;
-    const dur = sleep.hours ?? sleep.duration;
-    if (score != null) document.getElementById('sleepScore').textContent = Math.round(score);
-    if (dur != null) document.getElementById('sleepDuration').textContent = fmtHours(dur);
-    const stages = sleep.stages || {};
-    const total = (stages.deep || 0) + (stages.rem || 0) + (stages.light || 0) + (stages.awake || 0);
-    if (total > 0) {
-      [['deep','deepBar','deepDur'],['rem','remBar','remDur'],
-       ['light','lightBar','lightDur'],['awake','awakeBar','awakeDur']].forEach(([key, barId, durId]) => {
-        const val = stages[key] || 0;
-        document.getElementById(barId).style.width = (val / total * 100).toFixed(1) + '%';
-        document.getElementById(durId).textContent = fmtHours(val);
-      });
-    }
   }
 
   // Activity
