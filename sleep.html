@@ -478,7 +478,14 @@ function ingestGarminSleep() {
   const s = cache.sleep;
   if (!s.hours || s.hours <= 0) return;
 
-  // Use today as the date (Garmin stores under wake date)
+  // Only ingest if the cache was fetched today — prevents stale data being
+  // stamped as today's record before health.html has run a fresh sync
+  if (cache.fetchedAt) {
+    const f = new Date(cache.fetchedAt);
+    const fetchedDate = `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}-${String(f.getDate()).padStart(2,'0')}`;
+    if (fetchedDate !== localDateStr(0)) return;
+  }
+
   const date = localDateStr(0);
   const history = storeGet(SLEEP_HISTORY_KEY) || [];
 
@@ -780,7 +787,23 @@ function renderChart(history) {
 // ── Main ───────────────────────────────────────────────────────
 function render() {
   ingestGarminSleep();
-  const history = storeGet(SLEEP_HISTORY_KEY) || [];
+  let history = storeGet(SLEEP_HISTORY_KEY) || [];
+
+  // Remove any today-dated record that was created from a stale cache
+  // (cache fetchedAt is not today, meaning we shouldn't have a record for today yet)
+  const cache = storeGet(GARMIN_CACHE_KEY);
+  if (cache?.fetchedAt) {
+    const f = new Date(cache.fetchedAt);
+    const fetchedDate = `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}-${String(f.getDate()).padStart(2,'0')}`;
+    const today = localDateStr(0);
+    if (fetchedDate !== today) {
+      const cleaned = history.filter(r => r.date !== today);
+      if (cleaned.length !== history.length) {
+        storeSet(SLEEP_HISTORY_KEY, cleaned);
+        history = cleaned;
+      }
+    }
+  }
   const last = history.length > 0 ? history[history.length - 1] : null;
 
   renderLastNight(last);
