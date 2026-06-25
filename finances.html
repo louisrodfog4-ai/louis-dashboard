@@ -440,15 +440,20 @@ body::after {
       <div style="font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono)">Sharesies Sync</div>
       <div id="sync-status" style="font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono)">Not synced yet</div>
     </div>
-    <div style="display:flex;gap:8px;align-items:stretch">
-      <div style="flex:1;display:flex;align-items:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);border-radius:10px;overflow:hidden" id="sync-input-wrap">
-        <span style="padding:0 8px 0 12px;color:var(--text-tertiary);font-size:15px;font-weight:600;flex-shrink:0">$</span>
-        <input id="sync-input" type="number" min="0" step="0.01" placeholder="Paste Sharesies NZD total"
-          style="flex:1;padding:11px 12px 11px 0;background:transparent;border:none;outline:none;color:var(--text-primary);font-size:15px;font-weight:600;font-family:inherit;-moz-appearance:textfield;-webkit-tap-highlight-color:transparent">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div style="flex:2;display:flex;align-items:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);border-radius:10px;overflow:hidden" id="sync-input-wrap">
+        <span style="padding:0 6px 0 12px;color:var(--text-tertiary);font-size:14px;font-weight:600;flex-shrink:0">$</span>
+        <input id="sync-input" type="number" min="0" step="0.01" placeholder="NZD total"
+          style="flex:1;padding:11px 10px 11px 0;background:transparent;border:none;outline:none;color:var(--text-primary);font-size:15px;font-weight:600;font-family:inherit;-moz-appearance:textfield;-webkit-tap-highlight-color:transparent;min-width:0">
       </div>
-      <button id="sync-btn" style="padding:0 16px;height:44px;flex-shrink:0;background:linear-gradient(180deg,rgba(110,231,183,0.20),rgba(110,231,183,0.10));border:1px solid rgba(110,231,183,0.30);border-radius:10px;color:#6EE7B7;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;-webkit-tap-highlight-color:transparent">Sync</button>
+      <div style="flex:1;display:flex;align-items:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);border-radius:10px;overflow:hidden" id="sync-ret-wrap">
+        <input id="sync-ret-input" type="number" min="-100" step="0.01" placeholder="Return %"
+          style="flex:1;padding:11px 6px 11px 12px;background:transparent;border:none;outline:none;color:var(--text-primary);font-size:15px;font-weight:600;font-family:inherit;-moz-appearance:textfield;-webkit-tap-highlight-color:transparent;min-width:0">
+        <span style="padding:0 12px 0 4px;color:var(--text-tertiary);font-size:14px;font-weight:600;flex-shrink:0">%</span>
+      </div>
+      <button id="sync-btn" style="padding:0 14px;height:44px;flex-shrink:0;background:linear-gradient(180deg,rgba(110,231,183,0.20),rgba(110,231,183,0.10));border:1px solid rgba(110,231,183,0.30);border-radius:10px;color:#6EE7B7;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;-webkit-tap-highlight-color:transparent">Sync</button>
     </div>
-    <div id="sync-delta-line" style="display:none;margin-top:8px;font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono)"></div>
+    <div id="sync-delta-line" style="display:none;font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono)"></div>
   </div>
 
   <!-- Hero -->
@@ -1152,8 +1157,24 @@ function updatePortfolioTotals() {
                + Object.values(liveValuesNZD).reduce((s, v) => s + v, 0);
   }
 
-  const gain = totalValue - totalInvested;
-  const ret  = (gain / totalInvested) * 100;
+  // Gain & return — use Sharesies simple return if synced (includes dividends)
+  let gain, ret;
+  if (syncData?.simpleReturn != null) {
+    // Sharesies return × invested = total return amount (includes dividends)
+    const syncedReturnAmt = totalInvested * (syncData.simpleReturn / 100);
+    // Adjust for live delta since sync
+    let delta = 0;
+    Object.entries(HOLDINGS_CFG).forEach(([id]) => {
+      const cur  = liveValuesNZD[id];
+      const snap = syncData.snapshot?.[id];
+      if (cur != null && snap != null) delta += cur - snap;
+    });
+    gain = syncedReturnAmt + delta;
+    ret  = (gain / totalInvested) * 100;
+  } else {
+    gain = totalValue - totalInvested;
+    ret  = (gain / totalInvested) * 100;
+  }
 
   document.getElementById('portfolio-total').textContent = '~' + fmtNZD(totalValue);
   document.getElementById('portfolio-invested').textContent = fmtNZD(totalInvested);
@@ -1189,29 +1210,35 @@ function updateSyncStatus() {
   const el = document.getElementById('sync-status');
   if (!syncData) { el.textContent = 'Not synced yet'; return; }
   const d = new Date(syncData.date);
+  const retStr = syncData.simpleReturn != null ? ' · +' + syncData.simpleReturn.toFixed(2) + '%' : '';
   el.textContent = 'Synced ' + d.toLocaleDateString('en-NZ', { day:'numeric', month:'short' })
-    + ' · ' + fmtNZD(syncData.total) + ' NZD';
-  // Pre-fill input with last synced value
+    + ' · ' + fmtNZD(syncData.total) + ' NZD' + retStr;
   document.getElementById('sync-input').value = syncData.total;
+  if (syncData.simpleReturn != null)
+    document.getElementById('sync-ret-input').value = syncData.simpleReturn;
 }
 
 function handleSync() {
-  const raw = parseFloat(document.getElementById('sync-input').value);
-  if (!raw || raw < 1000) {
+  const rawTotal = parseFloat(document.getElementById('sync-input').value);
+  const rawRet   = parseFloat(document.getElementById('sync-ret-input').value);
+  if (!rawTotal || rawTotal < 100) {
     const wrap = document.getElementById('sync-input-wrap');
     wrap.style.borderColor = '#FF8A8A';
     setTimeout(() => { wrap.style.borderColor = ''; }, 1200);
     return;
   }
-  // Snapshot current live values
   const snapshot = {};
   Object.keys(HOLDINGS_CFG).forEach(id => {
     if (liveValuesNZD[id] != null) snapshot[id] = liveValuesNZD[id];
   });
-  sSet(SYNC_KEY, { total: raw, date: new Date().toISOString(), snapshot });
+  sSet(SYNC_KEY, {
+    total: rawTotal,
+    simpleReturn: isNaN(rawRet) ? null : rawRet,
+    date: new Date().toISOString(),
+    snapshot,
+  });
   updateSyncStatus();
   updatePortfolioTotals();
-  // Flash button
   const btn = document.getElementById('sync-btn');
   btn.textContent = '✓ Saved';
   btn.style.color = '#fff';
@@ -1220,6 +1247,7 @@ function handleSync() {
 
 document.getElementById('sync-btn').addEventListener('click', handleSync);
 document.getElementById('sync-input').addEventListener('keydown', e => { if (e.key === 'Enter') handleSync(); });
+document.getElementById('sync-ret-input').addEventListener('keydown', e => { if (e.key === 'Enter') handleSync(); });
 
 async function fetchLivePrices() {
   const btn = document.getElementById('prices-refresh');
