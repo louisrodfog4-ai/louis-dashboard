@@ -434,6 +434,23 @@ body::after {
 <!-- ===== SHARES ===== -->
 <div style="margin-bottom:40px">
 
+  <!-- Sharesies Sync Card -->
+  <div class="card" style="padding:14px 16px;margin-bottom:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text-tertiary);font-family:var(--font-mono)">Sharesies Sync</div>
+      <div id="sync-status" style="font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono)">Not synced yet</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:stretch">
+      <div style="flex:1;display:flex;align-items:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);border-radius:10px;overflow:hidden" id="sync-input-wrap">
+        <span style="padding:0 8px 0 12px;color:var(--text-tertiary);font-size:15px;font-weight:600;flex-shrink:0">$</span>
+        <input id="sync-input" type="number" min="0" step="0.01" placeholder="Paste Sharesies NZD total"
+          style="flex:1;padding:11px 12px 11px 0;background:transparent;border:none;outline:none;color:var(--text-primary);font-size:15px;font-weight:600;font-family:inherit;-moz-appearance:textfield;-webkit-tap-highlight-color:transparent">
+      </div>
+      <button id="sync-btn" style="padding:0 16px;height:44px;flex-shrink:0;background:linear-gradient(180deg,rgba(110,231,183,0.20),rgba(110,231,183,0.10));border:1px solid rgba(110,231,183,0.30);border-radius:10px;color:#6EE7B7;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;-webkit-tap-highlight-color:transparent">Sync</button>
+    </div>
+    <div id="sync-delta-line" style="display:none;margin-top:8px;font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono)"></div>
+  </div>
+
   <!-- Hero -->
   <div class="shares-hero">
     <div class="shares-hero-title">Shares</div>
@@ -1065,6 +1082,10 @@ body::after {
 // ============================================================
 // LIVE SHARE PRICES
 // ============================================================
+function sGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
+function sSet(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+const SYNC_KEY = 'shares:sync';
+
 const HOLDINGS_CFG = {
   // Exchange-traded: get live prices from Yahoo Finance
   // putInNZD = Sharesies "amount put in" converted to NZD at time of purchase (approximate)
@@ -1101,19 +1122,35 @@ function setReturnEl(el, pct) {
 }
 
 function updatePortfolioTotals() {
-  // Sum static + live
-  let totalValue = 0;
-  let totalInvested = 0;
+  const syncData = sGet(SYNC_KEY);
+  const totalInvested = Object.values(STATIC_HOLDINGS).reduce((s, h) => s + h.putInNZD, 0)
+                      + Object.values(HOLDINGS_CFG).reduce((s, h) => s + h.putInNZD, 0);
+  let totalValue;
 
-  Object.entries(STATIC_HOLDINGS).forEach(([id, h]) => {
-    totalValue += h.valueNZD;
-    totalInvested += h.putInNZD;
-  });
-  Object.entries(HOLDINGS_CFG).forEach(([id, h]) => {
-    const liveVal = liveValuesNZD[id];
-    totalValue += (liveVal != null) ? liveVal : 0;
-    totalInvested += h.putInNZD;
-  });
+  if (syncData && Object.keys(liveValuesNZD).length > 0) {
+    // Sync mode: Sharesies total + live delta from exchange-traded holdings
+    let delta = 0;
+    Object.entries(HOLDINGS_CFG).forEach(([id]) => {
+      const cur  = liveValuesNZD[id];
+      const snap = syncData.snapshot?.[id];
+      if (cur != null && snap != null) delta += cur - snap;
+    });
+    totalValue = syncData.total + delta;
+
+    // Delta line
+    const deltaEl = document.getElementById('sync-delta-line');
+    if (deltaEl) {
+      const sign = delta >= 0 ? '+' : '';
+      const col  = delta >= 0 ? '#6EE7B7' : '#FF8A8A';
+      deltaEl.style.display = 'block';
+      deltaEl.innerHTML = 'Since sync: <span style="color:' + col + ';font-weight:700">'
+        + sign + fmtNZD(delta) + ' NZD</span> · live moves on BLK, RKLB, VAS, VESG';
+    }
+  } else {
+    // Fallback: calculated from units × live price
+    totalValue = Object.values(STATIC_HOLDINGS).reduce((s, h) => s + h.valueNZD, 0)
+               + Object.values(liveValuesNZD).reduce((s, v) => s + v, 0);
+  }
 
   const gain = totalValue - totalInvested;
   const ret  = (gain / totalInvested) * 100;
@@ -1127,7 +1164,7 @@ function updatePortfolioTotals() {
   retEl.textContent = (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%';
   retEl.style.color = ret >= 0 ? '#6EE7B7' : '#FF8A8A';
 
-  // Update best/worst stat tiles dynamically
+  // Stat tiles
   const allReturns = [];
   Object.entries(STATIC_HOLDINGS).forEach(([id, h]) => {
     allReturns.push({ id, ret: ((h.valueNZD - h.putInNZD) / h.putInNZD) * 100, valueNZD: h.valueNZD });
@@ -1146,6 +1183,43 @@ function updatePortfolioTotals() {
     document.getElementById('stat-top-holding').textContent = names[topH.id] || topH.id;
   }
 }
+
+function updateSyncStatus() {
+  const syncData = sGet(SYNC_KEY);
+  const el = document.getElementById('sync-status');
+  if (!syncData) { el.textContent = 'Not synced yet'; return; }
+  const d = new Date(syncData.date);
+  el.textContent = 'Synced ' + d.toLocaleDateString('en-NZ', { day:'numeric', month:'short' })
+    + ' · ' + fmtNZD(syncData.total) + ' NZD';
+  // Pre-fill input with last synced value
+  document.getElementById('sync-input').value = syncData.total;
+}
+
+function handleSync() {
+  const raw = parseFloat(document.getElementById('sync-input').value);
+  if (!raw || raw < 1000) {
+    const wrap = document.getElementById('sync-input-wrap');
+    wrap.style.borderColor = '#FF8A8A';
+    setTimeout(() => { wrap.style.borderColor = ''; }, 1200);
+    return;
+  }
+  // Snapshot current live values
+  const snapshot = {};
+  Object.keys(HOLDINGS_CFG).forEach(id => {
+    if (liveValuesNZD[id] != null) snapshot[id] = liveValuesNZD[id];
+  });
+  sSet(SYNC_KEY, { total: raw, date: new Date().toISOString(), snapshot });
+  updateSyncStatus();
+  updatePortfolioTotals();
+  // Flash button
+  const btn = document.getElementById('sync-btn');
+  btn.textContent = '✓ Saved';
+  btn.style.color = '#fff';
+  setTimeout(() => { btn.textContent = 'Sync'; btn.style.color = '#6EE7B7'; }, 1500);
+}
+
+document.getElementById('sync-btn').addEventListener('click', handleSync);
+document.getElementById('sync-input').addEventListener('keydown', e => { if (e.key === 'Enter') handleSync(); });
 
 async function fetchLivePrices() {
   const btn = document.getElementById('prices-refresh');
@@ -1224,6 +1298,7 @@ async function fetchLivePrices() {
 }
 
 // Run on load, then every 5 minutes
+updateSyncStatus();
 fetchLivePrices();
 setInterval(fetchLivePrices, 5 * 60 * 1000);
 </script>
