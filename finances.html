@@ -1335,6 +1335,7 @@ async function fetchLivePrices() {
   } catch (e) {
     updEl.textContent = 'Price fetch failed';
     console.error('fetchLivePrices:', e);
+    updatePortfolioTotals(); // still show synced total even if prices fail
   } finally {
     btn.textContent = '↻ Refresh';
     btn.disabled = false;
@@ -1343,6 +1344,7 @@ async function fetchLivePrices() {
 
 // Run on load, then every 5 minutes
 updateSyncStatus();
+updatePortfolioTotals(); // show synced total immediately, before prices load
 fetchLivePrices();
 setInterval(fetchLivePrices, 5 * 60 * 1000);
 </script>
