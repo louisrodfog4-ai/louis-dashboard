@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0d0a">
+<meta name="color-scheme" content="dark">
+<title>Sleep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<script src="topbar.js" defer></script>
+<style>
+:root {
+  --bg: #0a0d0a;
+  --bg-card: rgba(17,26,20,0.95);
+  --bg-input: rgba(0,0,0,0.30);
+  --bg-input-focus: rgba(0,0,0,0.40);
+  --bg-dropdown: rgba(11,17,13,0.97);
+  --border: rgba(255,255,255,0.07);
+  --border-soft: rgba(255,255,255,0.04);
+  --border-strong: rgba(255,255,255,0.12);
+  --text-primary: #eef2ee;
+  --text-secondary: #8a9a8a;
+  --text-tertiary: #4a5a4a;
+  --text-quaternary: #2e3d2e;
+  --accent: #4ade80;
+  --accent-glow: rgba(74,222,128,0.28);
+  --good: #4ade80;
+  --warn: #facc15;
+  --bad: #f87171;
+  --font: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --serif: 'DM Serif Display', Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh; overflow-x: hidden;
+}
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(60% 50% at 80% 10%, rgba(74,222,128,0.07) 0%, transparent 60%),
+    radial-gradient(50% 40% at 15% 90%, rgba(100,120,255,0.05) 0%, transparent 60%);
+  filter: blur(48px); pointer-events: none;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: 1;
+  background-image: radial-gradient(rgba(255,255,255,0.013) 1px, transparent 1px);
+  background-size: 3px 3px; pointer-events: none;
+}
+@keyframes drift { 0% { transform: translate(0,0); } 100% { transform: translate(-2%,2%); } }
+
+main {
+  position: relative; z-index: 2;
+  max-width: 720px; margin: 0 auto;
+  padding: 56px 20px calc(96px + env(safe-area-inset-bottom));
+  padding-top: max(56px, env(safe-area-inset-top, 56px));
+}
+
+/* ── Section ── */
+.section { margin-bottom: 28px; }
+.section-title {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin: 0 4px 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.section-title::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), transparent);
+}
+
+/* ── Card ── */
+.card {
+  background: var(--bg-card);
+  border-radius: 14px; padding: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+  margin-bottom: 10px;
+  position: relative; overflow: hidden;
+}
+
+/* ── Page header ── */
+.page-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.page-title {
+  font-family: var(--serif);
+  font-size: 30px; font-weight: 400; color: var(--text-primary);
+  letter-spacing: -0.01em; line-height: 1;
+}
+.page-subtitle {
+  font-size: 11px; color: var(--text-tertiary);
+  font-family: var(--font-mono); margin-top: 5px;
+}
+
+/* ── Tonight's Call ── */
+.todays-call {
+  padding: 16px 18px;
+  background: rgba(74,222,128,0.04);
+  border: 1px solid rgba(74,222,128,0.15);
+  border-radius: 14px; margin-bottom: 10px;
+}
+.call-eyebrow {
+  font-size: 9px; font-weight: 800; letter-spacing: 0.20em;
+  text-transform: uppercase; color: var(--accent);
+  font-family: var(--font-mono); margin-bottom: 8px;
+}
+.call-text {
+  font-size: 15px; font-weight: 500; color: var(--text-primary); line-height: 1.5;
+}
+.call-text.dim { color: var(--text-tertiary); font-style: italic; font-size: 13px; }
+
+/* ── Last Night grid ── */
+.sleep-summary-grid {
+  display: grid; grid-template-columns: auto 1fr;
+  gap: 20px; align-items: start;
+}
+@media (max-width: 480px) { .sleep-summary-grid { grid-template-columns: 1fr; } }
+
+.sleep-score-block { text-align: center; min-width: 80px; }
+.sleep-score-big {
+  font-size: 52px; font-weight: 800; line-height: 1;
+  color: var(--text-primary); font-variant-numeric: tabular-nums;
+}
+.sleep-score-big.dim { color: var(--text-tertiary); font-size: 36px; }
+.sleep-score-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--text-tertiary);
+  font-family: var(--font-mono); margin-top: 2px;
+}
+.sleep-dur {
+  font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-top: 6px;
+}
+
+/* ── Stage bars ── */
+.sleep-stages { display: flex; flex-direction: column; gap: 8px; }
+.sleep-stage-row { display: flex; align-items: center; gap: 10px; }
+.sleep-stage-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sleep-stage-name {
+  font-size: 11px; font-weight: 600; color: var(--text-secondary); min-width: 40px;
+}
+.sleep-stage-bar-wrap {
+  flex: 1; height: 6px;
+  background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden;
+}
+.sleep-stage-bar { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.22,1,0.36,1); }
+.sleep-stage-dur {
+  font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono);
+  min-width: 38px; text-align: right; font-variant-numeric: tabular-nums;
+}
+
+/* ── Metric tiles ── */
+.metric-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+@media (max-width: 480px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } }
+.metric-tile {
+  padding: 14px 14px 12px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+}
+.metric-tile-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--text-tertiary);
+  font-family: var(--font-mono); margin-bottom: 6px;
+}
+.metric-tile-val {
+  font-size: 22px; font-weight: 700; color: var(--text-primary);
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+.metric-tile-val.good { color: var(--good); }
+.metric-tile-val.warn { color: var(--warn); }
+.metric-tile-val.bad  { color: var(--bad); }
+.metric-tile-val.dim  { color: var(--text-tertiary); }
+.metric-tile-sub { font-size: 10px; color: var(--text-tertiary); margin-top: 3px; }
+.metric-tile-sub.good { color: var(--good); }
+.metric-tile-sub.warn { color: var(--warn); }
+.metric-tile-sub.bad  { color: var(--bad); }
+
+/* ── History chart ── */
+.chart-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.chart-title {
+  font-size: 13px; font-weight: 600; color: var(--text-primary);
+}
+.chart-legend {
+  display: flex; gap: 12px;
+}
+.chart-legend-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono);
+}
+.chart-legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+.chart-canvas-wrap { position: relative; }
+canvas#sleepChart { display: block; width: 100%; }
+
+.chart-empty {
+  text-align: center; padding: 32px 16px;
+  color: var(--text-tertiary); font-size: 13px; font-style: italic;
+}
+.chart-empty.hidden { display: none; }
+
+/* ── Bottom tab bar ── */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+  display: flex; justify-content: center;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+.tabbar-inner {
+  pointer-events: auto; display: flex;
+  gap: 2px; padding: 6px;
+  background: rgba(12,18,13,0.92); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 50px;
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+}
+.tab {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 7px; padding: 10px 16px; border-radius: 40px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-tertiary); text-decoration: none;
+  background: transparent; border: 1px solid transparent;
+  transition: color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text-primary); }
+.tab[aria-current="page"] {
+  color: var(--accent); background: rgba(74,222,128,0.10);
+}
+.tab-icon { width: 17px; height: 17px; display: inline-flex; align-items: center; justify-content: center; }
+.tab-icon svg { width: 100%; height: 100%; display: block; }
+
+@media (max-width: 600px) {
+  main { padding: 40px 16px calc(96px + env(safe-area-inset-bottom)); }
+  .tabbar { padding-left: 8px; padding-right: 8px; }
+  .tabbar-inner { gap: 2px; padding: 4px; }
+  .tab { padding: 9px 10px; font-size: 11px; gap: 4px; }
+  .tab-icon { width: 15px; height: 15px; }
+}
+
+::selection { background: rgba(29,158,117,0.3); color: var(--text-primary); }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- ══ HEADER ══ -->
+  <section class="section">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Sleep</div>
+        <div class="page-subtitle" id="sleepSubtitle">No data yet — sync your Garmin</div>
+      </div>
+    </div>
+
+    <!-- Tonight's Call -->
+    <div class="todays-call">
+      <div class="call-eyebrow">Tonight's Call</div>
+      <div class="call-text dim" id="tonightsCall">Sync your Garmin watch to get a personalised bedtime recommendation.</div>
+    </div>
+  </section>
+
+  <!-- ══ LAST NIGHT ══ -->
+  <section class="section">
+    <div class="section-title">Last Night</div>
+    <div class="card">
+      <div class="sleep-summary-grid">
+        <div class="sleep-score-block">
+          <div class="sleep-score-big dim" id="lastScore">—</div>
+          <div class="sleep-score-lbl">Score</div>
+          <div class="sleep-dur" id="lastDur">—</div>
+        </div>
+        <div class="sleep-stages">
+          <div class="sleep-stage-row">
+            <div class="sleep-stage-dot" style="background:#6366f1"></div>
+            <div class="sleep-stage-name">Deep</div>
+            <div class="sleep-stage-bar-wrap"><div class="sleep-stage-bar" id="deepBar" style="width:0%;background:#6366f1"></div></div>
+            <div class="sleep-stage-dur" id="deepDur">—</div>
+          </div>
+          <div class="sleep-stage-row">
+            <div class="sleep-stage-dot" style="background:#8b5cf6"></div>
+            <div class="sleep-stage-name">REM</div>
+            <div class="sleep-stage-bar-wrap"><div class="sleep-stage-bar" id="remBar" style="width:0%;background:#8b5cf6"></div></div>
+            <div class="sleep-stage-dur" id="remDur">—</div>
+          </div>
+          <div class="sleep-stage-row">
+            <div class="sleep-stage-dot" style="background:#60a5fa"></div>
+            <div class="sleep-stage-name">Light</div>
+            <div class="sleep-stage-bar-wrap"><div class="sleep-stage-bar" id="lightBar" style="width:0%;background:#60a5fa"></div></div>
+            <div class="sleep-stage-dur" id="lightDur">—</div>
+          </div>
+          <div class="sleep-stage-row">
+            <div class="sleep-stage-dot" style="background:rgba(255,255,255,0.18)"></div>
+            <div class="sleep-stage-name">Awake</div>
+            <div class="sleep-stage-bar-wrap"><div class="sleep-stage-bar" id="awakeBar" style="width:0%;background:rgba(255,255,255,0.18)"></div></div>
+            <div class="sleep-stage-dur" id="awakeDur">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ HISTORY CHART ══ -->
+  <section class="section">
+    <div class="section-title">History</div>
+    <div class="card">
+      <div class="chart-header">
+        <div class="chart-title">Sleep duration</div>
+        <div class="chart-legend">
+          <div class="chart-legend-item">
+            <div class="chart-legend-dot" style="background:var(--accent)"></div>7h+ goal
+          </div>
+          <div class="chart-legend-item">
+            <div class="chart-legend-dot" style="background:rgba(255,255,255,0.2)"></div>avg
+          </div>
+        </div>
+      </div>
+      <div class="chart-canvas-wrap">
+        <div class="chart-empty" id="chartEmpty">No sleep history yet — data will build up over time.</div>
+        <canvas id="sleepChart" height="140" style="display:none"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ WEEKLY STATS ══ -->
+  <section class="section">
+    <div class="section-title">This Week</div>
+    <div class="metric-grid">
+      <div class="metric-tile">
+        <div class="metric-tile-label">Avg this week</div>
+        <div class="metric-tile-val dim" id="avgThisWeek">—</div>
+        <div class="metric-tile-sub" id="avgThisWeekSub">hrs / night</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-tile-label">Avg last week</div>
+        <div class="metric-tile-val dim" id="avgLastWeek">—</div>
+        <div class="metric-tile-sub">hrs / night</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-tile-label">Best night</div>
+        <div class="metric-tile-val dim" id="bestNight">—</div>
+        <div class="metric-tile-sub" id="bestNightSub">this week</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-tile-label">Worst night</div>
+        <div class="metric-tile-val dim" id="worstNight">—</div>
+        <div class="metric-tile-sub" id="worstNightSub">this week</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-tile-label">Goal streak</div>
+        <div class="metric-tile-val dim" id="goalStreak">—</div>
+        <div class="metric-tile-sub">nights ≥ 7h</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-tile-label">Sleep debt</div>
+        <div class="metric-tile-val dim" id="sleepDebt">—</div>
+        <div class="metric-tile-sub" id="sleepDebtSub">vs 8h goal</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ══ NAV ══ -->
+<nav class="tabbar" aria-label="Main navigation">
+  <div class="tabbar-inner">
+    <a href="index.html" class="tab">
+      <span class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </span>
+      Dashboard
+    </a>
+    <a href="health.html" class="tab">
+      <span class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a5 5 0 0 1 5 5c0 5-5 11-5 11S7 12 7 7a5 5 0 0 1 5-5z"/>
+          <circle cx="12" cy="7" r="2"/>
+        </svg>
+      </span>
+      Health
+    </a>
+    <a href="sleep.html" class="tab" aria-current="page">
+      <span class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </span>
+      Sleep
+    </a>
+    <a href="gym.html" class="tab">
+      <span class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </span>
+      Gym
+    </a>
+    <a href="finances.html" class="tab">
+      <span class="tab-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+      </span>
+      Finances
+    </a>
+  </div>
+</nav>
+
+<script>
+(() => {
+'use strict';
+
+const storeGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const storeSet = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+const GARMIN_CACHE_KEY = 'health:garmin:cache';
+const SLEEP_HISTORY_KEY = 'sleep:history';
+const SLEEP_GOAL_H = 7;
+const TARGET_BED = 22; // 10 PM default target
+
+// ── Helpers ──────────────────────────────────────────────────
+function fmtH(h) {
+  if (h == null) return '—';
+  const hrs = Math.floor(h);
+  const mins = Math.round((h - hrs) * 60);
+  return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+}
+
+function localDateStr(offsetDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function dayLabel(dateStr) {
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const d = new Date(dateStr + 'T12:00:00');
+  return days[d.getDay()];
+}
+
+function sleepQuality(h) {
+  if (h == null) return 'dim';
+  if (h >= SLEEP_GOAL_H) return 'good';
+  if (h >= 5.5) return 'warn';
+  return 'bad';
+}
+
+function barColor(h) {
+  if (h == null) return 'rgba(255,255,255,0.1)';
+  if (h >= SLEEP_GOAL_H) return '#4ade80';
+  if (h >= 5.5) return '#facc15';
+  return '#f87171';
+}
+
+// ── Ingest Garmin cache → sleep history ───────────────────────
+function ingestGarminSleep() {
+  const cache = storeGet(GARMIN_CACHE_KEY);
+  if (!cache?.sleep) return;
+  const s = cache.sleep;
+  if (!s.hours || s.hours <= 0) return;
+
+  // Use today as the date (Garmin stores under wake date)
+  const date = localDateStr(0);
+  const history = storeGet(SLEEP_HISTORY_KEY) || [];
+
+  const existing = history.findIndex(r => r.date === date);
+  const record = {
+    date,
+    score:  s.score  ?? null,
+    hours:  s.hours,
+    stages: {
+      deep:  s.stages?.deep  ?? null,
+      rem:   s.stages?.rem   ?? null,
+      light: s.stages?.light ?? null,
+      awake: s.stages?.awake ?? null,
+    }
+  };
+
+  if (existing >= 0) {
+    history[existing] = record;
+  } else {
+    history.push(record);
+  }
+
+  // Keep last 90 nights
+  history.sort((a, b) => a.date.localeCompare(b.date));
+  storeSet(SLEEP_HISTORY_KEY, history.slice(-90));
+}
+
+// ── Render: Last Night ────────────────────────────────────────
+function renderLastNight(record) {
+  const scoreEl  = document.getElementById('lastScore');
+  const durEl    = document.getElementById('lastDur');
+  const subtitle = document.getElementById('sleepSubtitle');
+
+  if (!record) {
+    scoreEl.textContent = '—'; scoreEl.className = 'sleep-score-big dim';
+    durEl.textContent = '—';
+    return;
+  }
+
+  if (record.score != null && record.score > 0) {
+    scoreEl.textContent = Math.round(record.score);
+    scoreEl.className = 'sleep-score-big ' + sleepQuality(record.hours);
+  } else {
+    scoreEl.textContent = '—'; scoreEl.className = 'sleep-score-big dim';
+  }
+
+  durEl.textContent = fmtH(record.hours);
+
+  const date = new Date(record.date + 'T12:00:00');
+  subtitle.textContent = 'Last synced: ' + date.toLocaleDateString('en-NZ', { weekday: 'short', day: 'numeric', month: 'short' });
+
+  // Stage bars
+  const st = record.stages || {};
+  const total = (st.deep || 0) + (st.rem || 0) + (st.light || 0) + (st.awake || 0);
+  const stages = [
+    { bar: 'deepBar',  dur: 'deepDur',  val: st.deep  },
+    { bar: 'remBar',   dur: 'remDur',   val: st.rem   },
+    { bar: 'lightBar', dur: 'lightDur', val: st.light },
+    { bar: 'awakeBar', dur: 'awakeDur', val: st.awake },
+  ];
+  stages.forEach(({ bar, dur, val }) => {
+    const pct = total > 0 && val != null ? (val / total * 100).toFixed(1) : 0;
+    document.getElementById(bar).style.width = pct + '%';
+    document.getElementById(dur).textContent = val != null && val > 0 ? fmtH(val) : '—';
+  });
+}
+
+// ── Tonight's Call ─────────────────────────────────────────────
+function renderTonightsCall(record) {
+  const el = document.getElementById('tonightsCall');
+  if (!record) {
+    el.textContent = 'Sync your Garmin watch to get a personalised bedtime recommendation.';
+    el.className = 'call-text dim';
+    return;
+  }
+
+  const h = record.hours;
+  el.className = 'call-text';
+
+  if (h >= 8) {
+    el.textContent = `Great sleep last night — ${fmtH(h)}. Keep the same routine and aim for the same bedtime tonight.`;
+  } else if (h >= SLEEP_GOAL_H) {
+    el.textContent = `Solid night — ${fmtH(h)} logged. You're meeting your goal. Aim for 10 PM tonight to stay consistent.`;
+  } else if (h >= 5.5) {
+    const deficit = SLEEP_GOAL_H - h;
+    el.textContent = `You slept ${fmtH(h)} last night — ${deficit.toFixed(1)}h short of your ${SLEEP_GOAL_H}h goal. Aim for bed by 10 PM tonight to recover.`;
+  } else {
+    el.textContent = `Short night — only ${fmtH(h)} last night. Aim for bed by 9:30 PM tonight and avoid screens in the hour before.`;
+  }
+}
+
+// ── Weekly Stats ───────────────────────────────────────────────
+function renderWeeklyStats(history) {
+  const today = localDateStr(0);
+  const todayD = new Date(today + 'T12:00:00');
+
+  // This week: Mon–today (or last 7 days)
+  const thisWeek = history.filter(r => {
+    const diff = (todayD - new Date(r.date + 'T12:00:00')) / 86400000;
+    return diff >= 0 && diff < 7;
+  });
+
+  const lastWeek = history.filter(r => {
+    const diff = (todayD - new Date(r.date + 'T12:00:00')) / 86400000;
+    return diff >= 7 && diff < 14;
+  });
+
+  function avg(arr) {
+    const valid = arr.filter(r => r.hours > 0).map(r => r.hours);
+    return valid.length ? valid.reduce((a, b) => a + b, 0) / valid.length : null;
+  }
+
+  const thisAvg = avg(thisWeek);
+  const lastAvg = avg(lastWeek);
+
+  const valid = thisWeek.filter(r => r.hours > 0);
+  const best  = valid.length ? valid.reduce((a, b) => a.hours > b.hours ? a : b) : null;
+  const worst = valid.length ? valid.reduce((a, b) => a.hours < b.hours ? a : b) : null;
+
+  // Goal streak (consecutive nights from today backwards)
+  let streak = 0;
+  for (let i = 0; i < 90; i++) {
+    const date = localDateStr(-i);
+    const r = history.find(x => x.date === date);
+    if (r && r.hours >= SLEEP_GOAL_H) streak++;
+    else break;
+  }
+
+  // Sleep debt this week vs 8h/night target
+  const debtHours = thisWeek.filter(r => r.hours > 0).reduce((acc, r) => acc + Math.max(0, 8 - r.hours), 0);
+
+  // Render
+  function setTile(id, subId, val, sub, cls) {
+    const el = document.getElementById(id);
+    el.textContent = val ?? '—';
+    el.className = 'metric-tile-val ' + (val != null ? (cls || '') : 'dim');
+    if (subId) document.getElementById(subId).textContent = sub || '';
+  }
+
+  setTile('avgThisWeek', 'avgThisWeekSub',
+    thisAvg != null ? fmtH(thisAvg) : null,
+    thisAvg != null && lastAvg != null
+      ? (thisAvg > lastAvg ? `↑ ${(thisAvg - lastAvg).toFixed(1)}h vs last week` : `↓ ${(lastAvg - thisAvg).toFixed(1)}h vs last week`)
+      : 'hrs / night',
+    sleepQuality(thisAvg)
+  );
+
+  setTile('avgLastWeek', null,
+    lastAvg != null ? fmtH(lastAvg) : null, null, sleepQuality(lastAvg)
+  );
+
+  setTile('bestNight', 'bestNightSub',
+    best ? fmtH(best.hours) : null,
+    best ? dayLabel(best.date) : 'this week',
+    'good'
+  );
+
+  setTile('worstNight', 'worstNightSub',
+    worst ? fmtH(worst.hours) : null,
+    worst ? dayLabel(worst.date) : 'this week',
+    worst ? sleepQuality(worst.hours) : 'dim'
+  );
+
+  setTile('goalStreak', null,
+    streak > 0 ? streak + 'd' : null, null,
+    streak >= 3 ? 'good' : streak > 0 ? 'warn' : 'dim'
+  );
+
+  setTile('sleepDebt', 'sleepDebtSub',
+    thisWeek.filter(r => r.hours > 0).length > 0 ? fmtH(debtHours) : null,
+    debtHours === 0 ? 'fully recovered' : 'this week',
+    debtHours === 0 ? 'good' : debtHours < 4 ? 'warn' : 'bad'
+  );
+}
+
+// ── History Chart (plain canvas, no libraries) ─────────────────
+function renderChart(history) {
+  const canvas  = document.getElementById('sleepChart');
+  const emptyEl = document.getElementById('chartEmpty');
+
+  // Show last 14 nights (fill with nulls if fewer)
+  const today = localDateStr(0);
+  const slots = Array.from({ length: 14 }, (_, i) => {
+    const date = localDateStr(-(13 - i));
+    return history.find(r => r.date === date) || { date, hours: null };
+  });
+
+  const hasData = slots.some(s => s.hours != null && s.hours > 0);
+  if (!hasData) {
+    emptyEl.classList.remove('hidden');
+    canvas.style.display = 'none';
+    return;
+  }
+  emptyEl.classList.add('hidden');
+  canvas.style.display = 'block';
+
+  const dpr  = window.devicePixelRatio || 1;
+  const W    = canvas.parentElement.clientWidth;
+  const H    = 140;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const PAD_L = 28, PAD_R = 8, PAD_T = 12, PAD_B = 24;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+  const MAX_H  = 10; // max hours on y-axis
+  const barW   = Math.max(6, (chartW / slots.length) * 0.55);
+  const gap    = chartW / slots.length;
+
+  const yScale = v => PAD_T + chartH - (v / MAX_H) * chartH;
+  const xOf    = i => PAD_L + gap * i + gap / 2;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Y-axis grid lines
+  [4, 6, 8].forEach(h => {
+    const y = yScale(h);
+    ctx.beginPath();
+    ctx.setLineDash(h === SLEEP_GOAL_H ? [4, 3] : []);
+    ctx.strokeStyle = h === SLEEP_GOAL_H ? 'rgba(74,222,128,0.25)' : 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Label
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = `${9 * dpr / dpr}px DM Sans, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillText(h + 'h', PAD_L - 4, y + 3.5);
+  });
+
+  // Goal line label
+  ctx.fillStyle = 'rgba(74,222,128,0.5)';
+  ctx.font = `bold 8px DM Sans, sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.fillText('goal', PAD_L + 4, yScale(SLEEP_GOAL_H) - 3);
+
+  // Bars
+  slots.forEach((slot, i) => {
+    const x = xOf(i);
+    if (!slot.hours || slot.hours <= 0) {
+      // Empty slot placeholder
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.beginPath();
+      ctx.roundRect(x - barW/2, PAD_T, barW, chartH, 3);
+      ctx.fill();
+      return;
+    }
+
+    const barH  = (Math.min(slot.hours, MAX_H) / MAX_H) * chartH;
+    const barY  = PAD_T + chartH - barH;
+    const color = barColor(slot.hours);
+
+    // Glow
+    ctx.shadowColor  = color;
+    ctx.shadowBlur   = slot.hours >= SLEEP_GOAL_H ? 8 : 0;
+    ctx.fillStyle    = color;
+    ctx.globalAlpha  = 0.85;
+    ctx.beginPath();
+    ctx.roundRect(x - barW/2, barY, barW, barH, [3, 3, 0, 0]);
+    ctx.fill();
+    ctx.shadowBlur  = 0;
+    ctx.globalAlpha = 1;
+  });
+
+  // Average line
+  const validHours = slots.filter(s => s.hours > 0).map(s => s.hours);
+  if (validHours.length > 1) {
+    const avgVal = validHours.reduce((a, b) => a + b, 0) / validHours.length;
+    const avgY   = yScale(avgVal);
+    ctx.beginPath();
+    ctx.setLineDash([3, 4]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.30)';
+    ctx.lineWidth   = 1.5;
+    ctx.moveTo(PAD_L, avgY);
+    ctx.lineTo(W - PAD_R, avgY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // X-axis labels (Mon, Tue, etc.)
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.font = '9px DM Sans, sans-serif';
+  ctx.textAlign = 'center';
+  slots.forEach((slot, i) => {
+    const x = xOf(i);
+    const lbl = dayLabel(slot.date);
+    if (i % 2 === 0 || slots.length <= 7) {
+      ctx.fillText(lbl, x, H - 6);
+    }
+  });
+}
+
+// ── Main ───────────────────────────────────────────────────────
+function render() {
+  ingestGarminSleep();
+  const history = storeGet(SLEEP_HISTORY_KEY) || [];
+  const last = history.length > 0 ? history[history.length - 1] : null;
+
+  renderLastNight(last);
+  renderTonightsCall(last);
+  renderWeeklyStats(history);
+  renderChart(history);
+}
+
+render();
+
+// Re-render if Garmin cache updates (cross-tab or after health.html sync)
+window.addEventListener('storage', e => {
+  if (e.key === GARMIN_CACHE_KEY) render();
+});
+
+})();
+</script>
+</body>
+</html>
