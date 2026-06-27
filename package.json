@@ -2,6 +2,7 @@
   "name": "louis-dashboard",
   "version": "1.0.0",
   "dependencies": {
+    "@vercel/kv": "^3.0.0",
     "garmin-connect": "^1.6.2"
   }
 }

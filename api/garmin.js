@@ -86,7 +86,7 @@ module.exports = async (req, res) => {
     const rawDto   = sleepRawData?.dailySleepDTO   ?? sleepRawData;
     const todayDto = sleepTodayData?.dailySleepDTO ?? sleepTodayData;
 
-    const s = [dto, rawDto, todayDto].find(d => d?.sleepTimeSeconds != null);
+    const s = [todayDto, dto, rawDto].find(d => d?.sleepTimeSeconds != null);
     if (s) {
       sleep = {
         score:  s.sleepScores?.overall?.value ?? s.sleepScore ?? null,

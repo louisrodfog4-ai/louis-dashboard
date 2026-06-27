@@ -8,7 +8,7 @@
 <title>Finances</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=PT+Serif:wght@700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #050506;
@@ -153,54 +153,114 @@ body::after {
 }
 
 /* Hero card */
-.shares-hero {
-  background: linear-gradient(135deg, rgba(110,231,183,0.06), rgba(110,231,183,0.02));
-  border: 1px solid rgba(110,231,183,0.15);
-  border-radius: var(--radius-lg); padding: 20px;
+/* ============================================================
+   SHARES HUD HEADER
+   ============================================================ */
+@keyframes shudDraw   { to { stroke-dashoffset: 0 } }
+@keyframes shudFade   { from { opacity: 0 } to { opacity: .9 } }
+@keyframes shudFadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes shudSweep  {
+  0%   { transform: translateX(0); opacity: 0 }
+  8%   { opacity: 1 }
+  92%  { opacity: 1 }
+  100% { transform: translateX(500px); opacity: 0 }
+}
+.shares-hud {
+  display: flex; gap: 24px;
+  background: radial-gradient(120% 160% at 50% -30%, #0e1614 0%, #080b0a 60%);
+  border: 1px solid rgba(45,245,160,.13);
+  border-radius: 18px; padding: 26px 22px;
   margin-bottom: 8px; position: relative; overflow: hidden;
+  box-shadow: 0 26px 60px -22px rgba(0,0,0,.8), inset 0 1px 0 rgba(45,245,160,.16);
 }
-.shares-hero::before {
-  content: ''; position: absolute; top: 0; left: 14px; right: 14px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(110,231,183,0.2), transparent);
+.shares-hud-left {
+  flex: 1; display: flex; flex-direction: column; min-width: 0;
 }
-.shares-hero-title {
-  font-size: 26px; font-weight: 700; color: var(--text-primary);
-  line-height: 1; margin-bottom: 4px;
-  font-family: 'DM Serif Display', Georgia, serif;
+.shares-hud-title {
+  font: 700 34px 'PT Serif', Georgia, serif;
+  color: #F1F3F1; letter-spacing: -.01em; line-height: 1;
 }
-.shares-hero-sub {
-  font-size: 11px; color: var(--text-tertiary); margin-bottom: 18px;
-  font-family: var(--font-mono);
+.shares-hud-sub {
+  font: 400 12px 'JetBrains Mono', ui-monospace, monospace;
+  color: #717c78; margin-top: 10px;
 }
-.shares-hero-body {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  gap: 16px; flex-wrap: wrap;
+.shares-hud-spacer { flex: 1; min-height: 16px; }
+.shares-hud-eyebrow {
+  font: 500 10px 'JetBrains Mono', ui-monospace, monospace;
+  letter-spacing: .18em; text-transform: uppercase; color: #6b766f; margin-bottom: 6px;
 }
-.shares-hero-left {}
-.shares-hero-eyebrow {
-  font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
-  text-transform: uppercase; color: var(--text-tertiary);
-  font-family: var(--font-mono); margin-bottom: 4px;
+.shares-hud-total {
+  font: 700 38px 'PT Serif', Georgia, serif;
+  color: #F4F6F4; letter-spacing: -.01em; line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
-.shares-hero-total {
-  font-size: 34px; font-weight: 800; color: var(--text-primary);
-  line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+.shares-hud-currencies {
+  font: 400 12px 'JetBrains Mono', ui-monospace, monospace;
+  color: #717c78; margin-top: 8px;
 }
-.shares-hero-currencies {
-  font-size: 11px; color: var(--text-tertiary); margin-top: 4px;
+.shares-hud-right {
+  width: 290px; flex: none;
+  display: flex; flex-direction: column;
+  justify-content: space-between; align-items: flex-end; gap: 14px;
 }
-.shares-hero-pills { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
-.shares-pill {
-  display: inline-flex; align-items: center;
-  padding: 6px 12px; border-radius: 20px;
-  font-size: 11px; font-weight: 700; font-family: var(--font-mono);
-  border: 1px solid; white-space: nowrap;
+@media (max-width: 560px) {
+  .shares-hud { flex-direction: column; padding: 20px 18px; }
+  .shares-hud-right { width: 100%; }
+  .shares-hud-title { font-size: 28px; }
+  .shares-hud-total { font-size: 30px; }
 }
-.shares-pill.green {
-  color: #6EE7B7; background: rgba(110,231,183,0.10); border-color: rgba(110,231,183,0.25);
+/* HUD chart */
+.shares-hud-chart {
+  position: relative; width: 100%; height: 128px;
 }
-.shares-pill.dim {
-  color: var(--text-secondary); background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.10);
+.shud-chart-header {
+  position: absolute; top: -4px; left: 6px;
+  display: flex; align-items: center; gap: 10px; z-index: 2;
+}
+.shud-trend-label {
+  font: 500 9px 'JetBrains Mono', ui-monospace, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: #5d716a;
+}
+.shud-trend-pct {
+  font: 600 11px 'JetBrains Mono', ui-monospace, monospace; color: #34E29A;
+}
+.shud-corner {
+  position: absolute; width: 11px; height: 11px;
+  border-color: rgba(45,245,160,.42); border-style: solid;
+}
+.shud-corner.tl { top: 14px; left: 0; border-width: 1.5px 0 0 1.5px; }
+.shud-corner.tr { top: 14px; right: 0; border-width: 1.5px 1.5px 0 0; }
+.shud-corner.bl { bottom: 0; left: 0; border-width: 0 0 1.5px 1.5px; }
+.shud-corner.br { bottom: 0; right: 0; border-width: 0 1.5px 1.5px 0; }
+.shud-clip {
+  position: absolute; top: 14px; left: 0; right: 0; bottom: 0; overflow: hidden;
+}
+.shud-svg { display: block; width: 100%; height: 100%; }
+.shud-area { opacity: 0; animation: shudFade 1.4s .6s ease-out forwards; }
+.shud-line {
+  stroke-dasharray: 760; stroke-dashoffset: 760;
+  animation: shudDraw 1.8s .2s ease-out forwards;
+  filter: drop-shadow(0 0 6px rgba(45,245,160,.55));
+}
+.shud-cross { opacity: 0; animation: shudFadeIn .5s 1.6s ease-out forwards; }
+.shud-sweep {
+  position: absolute; top: 0; left: 0;
+  width: 68px; height: 100%;
+  background: linear-gradient(90deg, rgba(45,245,160,0), rgba(45,245,160,.12));
+  border-right: 2px solid rgba(124,255,201,.55);
+  box-shadow: 0 0 10px rgba(45,245,160,.4);
+  animation: shudSweep 3.8s linear infinite;
+}
+/* Pills */
+.shares-hud-pills { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.shud-pill {
+  font: 500 12px 'JetBrains Mono', ui-monospace, monospace;
+  padding: 6px 14px; border-radius: 999px; white-space: nowrap;
+}
+.shud-pill.dim  { color: #cdd4d0; background: #1a1f1d; }
+.shud-pill.green {
+  font-weight: 600; color: #34E29A;
+  background: rgba(52,226,154,.06); border: 1px solid rgba(52,226,154,.45);
 }
 
 /* Stat tiles */
@@ -464,19 +524,69 @@ body::after {
     <div id="sync-delta-line" style="display:none;font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono)"></div>
   </div>
 
-  <!-- Hero -->
-  <div class="shares-hero">
-    <div class="shares-hero-title">Shares</div>
-    <div class="shares-hero-sub">8 holdings · $30/week auto-invest · Mixed currencies</div>
-    <div class="shares-hero-body">
-      <div class="shares-hero-left">
-        <div class="shares-hero-eyebrow">Total Portfolio (NZD)</div>
-        <div class="shares-hero-total" id="portfolio-total">~$13,994</div>
-        <div class="shares-hero-currencies">Across NZD · AUD · USD holdings</div>
+  <!-- HUD Hero -->
+  <div class="shares-hud">
+    <div class="shares-hud-left">
+      <div class="shares-hud-title">Shares</div>
+      <div class="shares-hud-sub">8 holdings · $30/week auto-invest · Mixed currencies</div>
+      <div class="shares-hud-spacer"></div>
+      <div class="shares-hud-eyebrow">Total Portfolio (NZD)</div>
+      <div class="shares-hud-total" id="portfolio-total">~$15,057</div>
+      <div class="shares-hud-currencies">Across NZD · AUD · USD holdings</div>
+    </div>
+    <div class="shares-hud-right">
+      <!-- Trend chart -->
+      <div class="shares-hud-chart">
+        <div class="shud-chart-header">
+          <span class="shud-trend-label">— Portfolio trend</span>
+          <span class="shud-trend-pct" id="hero-trend-pct">—</span>
+        </div>
+        <div class="shud-corner tl"></div>
+        <div class="shud-corner tr"></div>
+        <div class="shud-corner bl"></div>
+        <div class="shud-corner br"></div>
+        <div class="shud-clip">
+          <svg class="shud-svg" viewBox="0 0 500 152" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="shudArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#2DF5A0" stop-opacity=".28"/>
+                <stop offset="1" stop-color="#2DF5A0" stop-opacity="0"/>
+              </linearGradient>
+              <linearGradient id="shudLine" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#19E0C8"/>
+                <stop offset="1" stop-color="#7CFFC9"/>
+              </linearGradient>
+            </defs>
+            <line x1="100" y1="22" x2="100" y2="152" stroke="rgba(45,245,160,.06)"/>
+            <line x1="200" y1="22" x2="200" y2="152" stroke="rgba(45,245,160,.06)"/>
+            <line x1="300" y1="22" x2="300" y2="152" stroke="rgba(45,245,160,.06)"/>
+            <line x1="400" y1="22" x2="400" y2="152" stroke="rgba(45,245,160,.06)"/>
+            <line x1="6"   y1="52"  x2="494" y2="52"  stroke="rgba(255,255,255,.04)"/>
+            <line x1="6"   y1="102" x2="494" y2="102" stroke="rgba(255,255,255,.04)"/>
+            <path class="shud-area" d="M6,128 L70,120 L130,124 L190,92 L250,100 L310,62 L370,54 L440,32 L494,16 L494,152 L6,152 Z" fill="url(#shudArea)"/>
+            <path class="shud-line" d="M6,128 L70,120 L130,124 L190,92 L250,100 L310,62 L370,54 L440,32 L494,16" fill="none" stroke="url(#shudLine)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Endpoint crosshair -->
+            <line class="shud-cross" x1="466" y1="16" x2="500" y2="16" stroke="rgba(124,255,201,.45)" stroke-width="1"/>
+            <line class="shud-cross" x1="494" y1="0"  x2="494" y2="46" stroke="rgba(124,255,201,.45)" stroke-width="1"/>
+            <!-- Lock-on dot -->
+            <circle class="shud-cross" cx="494" cy="16" r="4" fill="#BFFFE6" style="filter:drop-shadow(0 0 5px rgba(45,245,160,1))"/>
+            <!-- Rotating ring -->
+            <circle class="shud-cross" cx="494" cy="16" r="14" fill="none" stroke="rgba(124,255,201,.55)" stroke-width="1" stroke-dasharray="4 3">
+              <animateTransform attributeName="transform" type="rotate" from="0 494 16" to="360 494 16" dur="6s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Pulse ring -->
+            <circle cx="494" cy="16" r="6" fill="none" stroke="rgba(124,255,201,.75)" stroke-width="1.5">
+              <animate attributeName="r"       values="5;20"  dur="2s" begin="1.7s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values=".6;0"  dur="2s" begin="1.7s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+          <div class="shud-sweep"></div>
+        </div>
       </div>
-      <div class="shares-hero-pills">
-        <div class="shares-pill dim">8 holdings</div>
-        <div class="shares-pill green">$30/week investing</div>
+      <!-- Pills -->
+      <div class="shares-hud-pills">
+        <div class="shud-pill dim">8 holdings</div>
+        <div class="shud-pill green">$30/week investing</div>
       </div>
     </div>
   </div>
@@ -526,8 +636,8 @@ body::after {
           <div class="holding-meta">NZD · Auto $10.50/wk</div>
         </div>
         <div class="holding-right">
-          <div class="holding-value" id="holding-MERC-val">$3,898</div>
-          <div class="holding-return pos" id="holding-MERC-ret">+36.17%</div>
+          <div class="holding-value" id="holding-MERC-val">$3,906</div>
+          <div class="holding-return pos" id="holding-MERC-ret">+36.42%</div>
         </div>
       </div>
       <div class="holding-bar-wrap"><div class="holding-bar" id="holding-MERC-bar" style="width:100%;background:#6EE7B7"></div></div>
@@ -542,8 +652,8 @@ body::after {
           <div class="holding-meta">NZD · Auto $10.50/wk</div>
         </div>
         <div class="holding-right">
-          <div class="holding-value" id="holding-PFGR-val">$3,079</div>
-          <div class="holding-return pos" id="holding-PFGR-ret">+38.27%</div>
+          <div class="holding-value" id="holding-PFGR-val">$3,089</div>
+          <div class="holding-return pos" id="holding-PFGR-ret">+38.73%</div>
         </div>
       </div>
       <div class="holding-bar-wrap"><div class="holding-bar" id="holding-PFGR-bar" style="width:79%;background:#6EE7B7"></div></div>
@@ -574,8 +684,8 @@ body::after {
           <div class="holding-meta">NZD · Auto $4.50/wk</div>
         </div>
         <div class="holding-right">
-          <div class="holding-value" id="holding-SMRT-val">$1,458</div>
-          <div class="holding-return pos" id="holding-SMRT-ret">+9.85%</div>
+          <div class="holding-value" id="holding-SMRT-val">$1,463</div>
+          <div class="holding-return pos" id="holding-SMRT-ret">+10.21%</div>
         </div>
       </div>
       <div class="holding-bar-wrap"><div class="holding-bar" id="holding-SMRT-bar" style="width:37%;background:#6EE7B7"></div></div>
@@ -606,8 +716,8 @@ body::after {
           <div class="holding-meta">NZD · Auto $4.50/wk</div>
         </div>
         <div class="holding-right">
-          <div class="holding-value" id="holding-PFWT-val">$1,002</div>
-          <div class="holding-return pos" id="holding-PFWT-ret">+15.40%</div>
+          <div class="holding-value" id="holding-PFWT-val">$1,011</div>
+          <div class="holding-return pos" id="holding-PFWT-ret">+16.44%</div>
         </div>
       </div>
       <div class="holding-bar-wrap"><div class="holding-bar" id="holding-PFWT-bar" style="width:26%;background:#6EE7B7"></div></div>
@@ -722,7 +832,7 @@ body::after {
   <!-- Chart -->
   <div class="card" style="margin-top:10px;padding:14px 16px 10px">
     <div style="font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.14em;font-weight:700;font-family:var(--font-mono);margin-bottom:10px">Weekly Earnings</div>
-    <svg id="barberChartSvg" width="100%" viewBox="0 0 600 160" style="display:block;overflow:visible"></svg>
+    <svg id="barberChartSvg" width="100%" viewBox="0 0 600 170" style="display:block;overflow:visible"></svg>
     <div id="barberChartEmpty" style="display:none;align-items:center;justify-content:center;height:80px;font-size:12px;color:var(--text-tertiary);font-style:italic">Log a session to see your chart</div>
   </div>
 
@@ -889,61 +999,172 @@ body::after {
       weekTotals[wk] = (weekTotals[wk] || 0) + s.cuts * s.pricePerCut;
     });
     const sortedWks = Object.keys(weekTotals).sort();
-    const allWeeks = getWeekRange(sortedWks[0], getThisWeekKey());
+    // Always show at least 8 weeks so a single bar never fills the full chart
+    const eightWeeksAgo = (() => { const d = new Date(); d.setDate(d.getDate() - 7 * 7); return isoWeekKey(d.toISOString().slice(0, 10)); })();
+    const startWk = sortedWks[0] < eightWeeksAgo ? sortedWks[0] : eightWeeksAgo;
+    const allWeeks = getWeekRange(startWk, getThisWeekKey());
     const display = allWeeks.slice(-16);
     const values = display.map(w => weekTotals[w] || 0);
 
-    const W = 600, H = 160;
-    const padT = 18, padB = 28, padL = 4, padR = 4;
+    const W = 600, H = 170;
+    const padT = 22, padB = 28, padL = 4, padR = 4;
     const n = display.length;
     const maxVal = Math.max(...values, 1);
     const totalW = W - padL - padR;
     const barW = totalW / n;
-    const gap = Math.max(2, barW * 0.18);
-    const bw = barW - gap;
+    const gap = Math.max(2, barW * 0.22);
+    const bw = Math.min(barW - gap, 38);
     const cH = H - padT - padB;
     const ns = 'http://www.w3.org/2000/svg';
     const thisWk = getThisWeekKey();
+    const baseline = padT + cH;
 
-    [0.33, 0.67, 1].forEach(r => {
+    // — Defs ——————————————————————————————————
+    const defs = document.createElementNS(ns, 'defs');
+
+    const mkGrad = (id, c0, c1) => {
+      const g = document.createElementNS(ns, 'linearGradient');
+      g.setAttribute('id', id); g.setAttribute('x1','0'); g.setAttribute('y1','0');
+      g.setAttribute('x2','0'); g.setAttribute('y2','1');
+      const s0 = document.createElementNS(ns, 'stop');
+      s0.setAttribute('offset','0%'); s0.setAttribute('stop-color', c0);
+      const s1 = document.createElementNS(ns, 'stop');
+      s1.setAttribute('offset','100%'); s1.setAttribute('stop-color', c1);
+      g.appendChild(s0); g.appendChild(s1);
+      return g;
+    };
+    defs.appendChild(mkGrad('bcBarReg',  'rgba(110,231,183,0.55)', 'rgba(110,231,183,0.06)'));
+    defs.appendChild(mkGrad('bcBarNow',  '#6EE7B7',                'rgba(110,231,183,0.18)'));
+    defs.appendChild(mkGrad('bcArea',    'rgba(110,231,183,0.12)', 'rgba(110,231,183,0)'));
+    svg.appendChild(defs);
+
+    // — Grid lines ————————————————————————————
+    [0.25, 0.5, 0.75, 1].forEach(r => {
       const y = padT + cH * (1 - r);
-      const el = document.createElementNS(ns, 'line');
-      el.setAttribute('x1', padL); el.setAttribute('x2', W - padR);
-      el.setAttribute('y1', y);    el.setAttribute('y2', y);
-      el.setAttribute('stroke', 'rgba(255,255,255,0.05)');
-      el.setAttribute('stroke-width', '1');
-      svg.appendChild(el);
+      const line = document.createElementNS(ns, 'line');
+      line.setAttribute('x1', padL); line.setAttribute('x2', W - padR);
+      line.setAttribute('y1', y);    line.setAttribute('y2', y);
+      line.setAttribute('stroke', r === 1 ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.03)');
+      line.setAttribute('stroke-width', '1');
+      if (r < 1) line.setAttribute('stroke-dasharray', '3 5');
+      svg.appendChild(line);
     });
 
+    // — Compute bar centres for trend line ————
+    const trendPts = values.reduce((acc, v, i) => {
+      if (v > 0) {
+        const cx = padL + i * barW + gap / 2 + bw / 2;
+        const bh = Math.max(4, (v / maxVal) * cH);
+        acc.push({ x: cx, y: padT + cH - bh });
+      }
+      return acc;
+    }, []);
+
+    // — Area fill under trend line ————————————
+    if (trendPts.length >= 2) {
+      const smooth = (pts) => {
+        const t = 0.25;
+        let d = `M ${pts[0].x},${pts[0].y}`;
+        for (let i = 0; i < pts.length - 1; i++) {
+          const p0 = pts[Math.max(0, i - 1)];
+          const p1 = pts[i], p2 = pts[i + 1];
+          const p3 = pts[Math.min(pts.length - 1, i + 2)];
+          const cp1x = p1.x + (p2.x - p0.x) * t, cp1y = p1.y + (p2.y - p0.y) * t;
+          const cp2x = p2.x - (p3.x - p1.x) * t, cp2y = p2.y - (p3.y - p1.y) * t;
+          d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+        }
+        return d;
+      };
+      const linePath = smooth(trendPts);
+      const last = trendPts[trendPts.length - 1];
+      const first = trendPts[0];
+
+      const area = document.createElementNS(ns, 'path');
+      area.setAttribute('d', `${linePath} L ${last.x},${baseline} L ${first.x},${baseline} Z`);
+      area.setAttribute('fill', 'url(#bcArea)');
+      svg.appendChild(area);
+    }
+
+    // — Bars ——————————————————————————————————
     values.forEach((v, i) => {
       const x = padL + i * barW + gap / 2;
-      const bh = v > 0 ? Math.max(3, (v / maxVal) * cH) : 0;
+      const bh = v > 0 ? Math.max(4, (v / maxVal) * cH) : 0;
       const y = padT + cH - bh;
       const isNow = display[i] === thisWk;
 
+      if (bh === 0) return;
+
       const rect = document.createElementNS(ns, 'rect');
       rect.setAttribute('x', x); rect.setAttribute('y', y);
-      rect.setAttribute('width', Math.max(1, bw));
-      rect.setAttribute('height', bh); rect.setAttribute('rx', '3');
-      rect.setAttribute('fill', isNow ? '#6EE7B7' : 'rgba(110,231,183,0.38)');
-      if (isNow) rect.setAttribute('filter', 'drop-shadow(0 0 5px rgba(110,231,183,0.55))');
+      rect.setAttribute('width', Math.max(1, bw)); rect.setAttribute('height', bh);
+      rect.setAttribute('rx', '4');
+      rect.setAttribute('fill', isNow ? 'url(#bcBarNow)' : 'url(#bcBarReg)');
+      if (isNow) rect.setAttribute('filter', 'drop-shadow(0 0 8px rgba(110,231,183,0.45))');
+      const tip = document.createElementNS(ns, 'title');
+      tip.textContent = `Wk ${display[i]}: $${Math.round(v)}`;
+      rect.appendChild(tip);
       svg.appendChild(rect);
+    });
 
-      if (v > 0 && n <= 12) {
+    // — Trend line on top ————————————————————
+    if (trendPts.length >= 2) {
+      const smooth = (pts) => {
+        const t = 0.25;
+        let d = `M ${pts[0].x},${pts[0].y}`;
+        for (let i = 0; i < pts.length - 1; i++) {
+          const p0 = pts[Math.max(0, i - 1)];
+          const p1 = pts[i], p2 = pts[i + 1];
+          const p3 = pts[Math.min(pts.length - 1, i + 2)];
+          const cp1x = p1.x + (p2.x - p0.x) * t, cp1y = p1.y + (p2.y - p0.y) * t;
+          const cp2x = p2.x - (p3.x - p1.x) * t, cp2y = p2.y - (p3.y - p1.y) * t;
+          d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+        }
+        return d;
+      };
+      const tl = document.createElementNS(ns, 'path');
+      tl.setAttribute('d', smooth(trendPts));
+      tl.setAttribute('fill', 'none');
+      tl.setAttribute('stroke', 'rgba(110,231,183,0.45)');
+      tl.setAttribute('stroke-width', '1.5');
+      tl.setAttribute('stroke-linecap', 'round');
+      tl.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(tl);
+
+      // Glowing dot on latest point
+      const last = trendPts[trendPts.length - 1];
+      const dot = document.createElementNS(ns, 'circle');
+      dot.setAttribute('cx', last.x); dot.setAttribute('cy', last.y);
+      dot.setAttribute('r', '3'); dot.setAttribute('fill', '#6EE7B7');
+      dot.setAttribute('filter', 'drop-shadow(0 0 5px rgba(110,231,183,0.7))');
+      svg.appendChild(dot);
+    }
+
+    // — Labels ————————————————————————————————
+    values.forEach((v, i) => {
+      if (v === 0) return;
+      const x = padL + i * barW + gap / 2;
+      const bh = Math.max(4, (v / maxVal) * cH);
+      const y = padT + cH - bh;
+      const isNow = display[i] === thisWk;
+
+      // Dollar label — only for current week
+      if (isNow) {
         const lbl = document.createElementNS(ns, 'text');
-        lbl.setAttribute('x', x + bw / 2); lbl.setAttribute('y', y - 3);
-        lbl.setAttribute('text-anchor', 'middle'); lbl.setAttribute('font-size', '9');
-        lbl.setAttribute('fill', isNow ? '#6EE7B7' : 'rgba(110,231,183,0.65)');
+        lbl.setAttribute('x', x + bw / 2); lbl.setAttribute('y', y - 6);
+        lbl.setAttribute('text-anchor', 'middle'); lbl.setAttribute('font-size', '10');
+        lbl.setAttribute('font-weight', '600');
+        lbl.setAttribute('fill', '#6EE7B7');
         lbl.setAttribute('font-family', 'ui-monospace,monospace');
         lbl.textContent = '$' + Math.round(v);
         svg.appendChild(lbl);
       }
 
+      // Week labels at bottom
       if (n <= 10 || i % 2 === 0 || i === n - 1) {
         const wlbl = document.createElementNS(ns, 'text');
         wlbl.setAttribute('x', x + bw / 2); wlbl.setAttribute('y', H - 5);
         wlbl.setAttribute('text-anchor', 'middle'); wlbl.setAttribute('font-size', '8');
-        wlbl.setAttribute('fill', isNow ? '#6EE7B7' : 'rgba(118,116,110,0.75)');
+        wlbl.setAttribute('fill', isNow ? '#6EE7B7' : 'rgba(160,155,145,0.55)');
         wlbl.setAttribute('font-family', 'ui-monospace,monospace');
         wlbl.textContent = display[i].split('-')[1];
         svg.appendChild(wlbl);
@@ -1097,27 +1318,47 @@ body::after {
 // ============================================================
 function sGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
 function sSet(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+
+// Count-up animation for the HUD hero total (runs once on first update)
+let _hudCounted = false;
+function hudSetTotal(value) {
+  const el = document.getElementById('portfolio-total');
+  if (!el) return;
+  if (_hudCounted) { el.textContent = '~$' + Math.round(value).toLocaleString('en-NZ'); return; }
+  _hudCounted = true;
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const begin = performance.now() + 200, dur = 1700;
+  (function tick(now) {
+    let t = (now - begin) / dur;
+    if (t < 0) { requestAnimationFrame(tick); return; }
+    if (t > 1) t = 1;
+    el.textContent = '~$' + Math.round(value * ease(t)).toLocaleString('en-NZ');
+    if (t < 1) requestAnimationFrame(tick);
+  })(performance.now());
+}
 const SYNC_KEY = 'shares:sync';
 
 const HOLDINGS_CFG = {
   // Exchange-traded: get live prices from Yahoo Finance
   // putInNZD = Sharesies "amount put in" converted to NZD at time of purchase (approximate)
-  BLK:  { units: 0.01566686,  putInNZD: 29.57,   ySymbol: 'BLK',     fxSymbol: 'NZDUSD=X', fxMode: 'div', nativeCur: 'USD' },
-  RKLB: { units: 0.56868022,  putInNZD: 104.97,  ySymbol: 'RKLB',    fxSymbol: 'NZDUSD=X', fxMode: 'div', nativeCur: 'USD' },
-  VAS:  { units: 14.07916953, putInNZD: 1518.11,  ySymbol: 'VAS.AX',  fxSymbol: 'AUDNZD=X', fxMode: 'mul', nativeCur: 'AUD' },
-  VESG: { units: 24.69856591, putInNZD: 2420.91,  ySymbol: 'VESG.AX', fxSymbol: 'AUDNZD=X', fxMode: 'mul', nativeCur: 'AUD' },
+  // putInNative = cost basis in the stock's native currency (matches Sharesies return calculation)
+  BLK:  { units: 0.01566686,  putInNZD: 29.57,   putInNative: 17.73,   ySymbol: 'BLK',     fxSymbol: 'NZDUSD=X', fxMode: 'div', nativeCur: 'USD' },
+  RKLB: { units: 0.56868022,  putInNZD: 104.97,  putInNative: 63.52,   ySymbol: 'RKLB',    fxSymbol: 'NZDUSD=X', fxMode: 'div', nativeCur: 'USD' },
+  VAS:  { units: 14.07916953, putInNZD: 1518.11,  putInNative: 1324.77, ySymbol: 'VAS.AX',  fxSymbol: 'AUDNZD=X', fxMode: 'mul', nativeCur: 'AUD' },
+  VESG: { units: 24.69856591, putInNZD: 2420.91,  putInNative: 2165.32, ySymbol: 'VESG.AX', fxSymbol: 'AUDNZD=X', fxMode: 'mul', nativeCur: 'AUD' },
 };
 
 // Static NZX managed funds (update at most once daily — no live price feed)
 const STATIC_HOLDINGS = {
-  MERC: { valueNZD: 3898.26, putInNZD: 2931.00 },
-  PFGR: { valueNZD: 3078.68, putInNZD: 2226.50 },
-  PFWT: { valueNZD: 1002.29, putInNZD: 868.50  },
-  SMRT: { valueNZD: 1458.24, putInNZD: 1448.38 },
+  MERC: { valueNZD: 3905.50, putInNZD: 2931.00, retPct: 36.42 },
+  PFGR: { valueNZD: 3088.82, putInNZD: 2226.50, retPct: 38.73 },
+  PFWT: { valueNZD: 1011.26, putInNZD: 868.50,  retPct: 16.44 },
+  SMRT: { valueNZD: 1463.48, putInNZD: 1448.38, retPct: 10.21 },
 };
 
 // Cache live values so portfolio total stays consistent
 const liveValuesNZD = {};
+const liveRetPct    = {};
 
 function fmtNZD(n) {
   return '$' + Math.round(n).toLocaleString('en-NZ');
@@ -1187,7 +1428,7 @@ function updatePortfolioTotals() {
     ret  = (gain / totalInvested) * 100;
   }
 
-  document.getElementById('portfolio-total').textContent = '~' + fmtNZD(totalValue);
+  hudSetTotal(totalValue);
   document.getElementById('portfolio-invested').textContent = fmtNZD(totalInvested);
   const gainEl = document.getElementById('portfolio-gain');
   gainEl.textContent = (gain >= 0 ? '+' : '') + fmtNZD(gain);
@@ -1195,15 +1436,20 @@ function updatePortfolioTotals() {
   const retEl = document.getElementById('portfolio-return');
   retEl.textContent = (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%';
   retEl.style.color = ret >= 0 ? '#6EE7B7' : '#FF8A8A';
+  const heroTrendEl = document.getElementById('hero-trend-pct');
+  if (heroTrendEl) {
+    heroTrendEl.textContent = (ret >= 0 ? '▲ ' : '▼ ') + Math.abs(ret).toFixed(2) + '%';
+    heroTrendEl.style.color  = ret >= 0 ? '#34E29A' : '#FF8A8A';
+  }
 
   // Stat tiles
   const allReturns = [];
   Object.entries(STATIC_HOLDINGS).forEach(([id, h]) => {
-    allReturns.push({ id, ret: ((h.valueNZD - h.putInNZD) / h.putInNZD) * 100, valueNZD: h.valueNZD });
+    allReturns.push({ id, ret: h.retPct ?? ((h.valueNZD - h.putInNZD) / h.putInNZD) * 100, valueNZD: h.valueNZD });
   });
   Object.entries(HOLDINGS_CFG).forEach(([id, h]) => {
     const v = liveValuesNZD[id];
-    if (v != null) allReturns.push({ id, ret: ((v - h.putInNZD) / h.putInNZD) * 100, valueNZD: v });
+    if (v != null) allReturns.push({ id, ret: liveRetPct[id] ?? ((v - h.putInNZD) / h.putInNZD) * 100, valueNZD: v });
   });
   if (allReturns.length) {
     const best  = allReturns.reduce((a, b) => a.ret > b.ret ? a : b);
@@ -1298,7 +1544,11 @@ async function fetchLivePrices() {
       const nzdVal    = h.fxMode === 'div' ? nativeVal / fx : nativeVal * fx;
       liveValuesNZD[id] = nzdVal;
 
-      const retPct = ((nzdVal - h.putInNZD) / h.putInNZD) * 100;
+      // Match Sharesies: return in native currency, not NZD
+      const retPct = h.putInNative
+        ? ((nativeVal - h.putInNative) / h.putInNative) * 100
+        : ((nzdVal - h.putInNZD) / h.putInNZD) * 100;
+      liveRetPct[id] = retPct;
       const barPct = Math.max(0.5, (nzdVal / maxVal) * 100);
       const barCol = retPct >= 0 ? '#6EE7B7' : '#FF8A8A';
 

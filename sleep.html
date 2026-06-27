@@ -104,6 +104,21 @@ main {
   font-size: 11px; color: var(--text-tertiary);
   font-family: var(--font-mono); margin-top: 5px;
 }
+.sleep-sync-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px;
+  background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.30);
+  border-radius: 30px; color: var(--accent);
+  font-family: var(--font); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.09em; text-transform: uppercase;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, border-color 0.15s; white-space: nowrap;
+}
+.sleep-sync-btn:hover { background: rgba(74,222,128,0.16); border-color: rgba(74,222,128,0.50); }
+.sleep-sync-btn:active { transform: scale(0.97); }
+.sleep-sync-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+.sleep-sync-btn.loading svg { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Tonight's Call ── */
 .todays-call {
@@ -267,6 +282,13 @@ canvas#sleepChart { display: block; width: 100%; }
         <div class="page-title">Sleep</div>
         <div class="page-subtitle" id="sleepSubtitle">No data yet — sync your Garmin</div>
       </div>
+      <button class="sleep-sync-btn" id="sleepSyncBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+        </svg>
+        Sync
+      </button>
     </div>
 
     <!-- Tonight's Call -->
@@ -334,6 +356,13 @@ canvas#sleepChart { display: block; width: 100%; }
       <div class="chart-canvas-wrap">
         <div class="chart-empty" id="chartEmpty">No sleep history yet — data will build up over time.</div>
         <canvas id="sleepChart" height="140" style="display:none"></canvas>
+        <div id="chartTooltip" style="
+          position:absolute; pointer-events:none; display:none;
+          background:rgba(11,20,14,0.92); border:1px solid rgba(255,255,255,0.10);
+          border-radius:8px; padding:6px 10px;
+          font-family:var(--font-mono); font-size:11px; color:var(--text-primary);
+          white-space:nowrap; transform:translateX(-50%);
+        "></div>
       </div>
     </div>
   </section>
@@ -662,6 +691,14 @@ function renderWeeklyStats(history) {
 }
 
 // ── History Chart (plain canvas, no libraries) ─────────────────
+let chartHitAreas = []; // [{x, barY, barW, barH, slot}]
+
+function fmtSleepDur(h) {
+  const hrs = Math.floor(h);
+  const mins = Math.round((h - hrs) * 60);
+  return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+}
+
 function renderChart(history) {
   const canvas  = document.getElementById('sleepChart');
   const emptyEl = document.getElementById('chartEmpty');
@@ -729,6 +766,7 @@ function renderChart(history) {
   ctx.fillText('goal', PAD_L + 4, yScale(SLEEP_GOAL_H) - 3);
 
   // Bars
+  chartHitAreas = [];
   slots.forEach((slot, i) => {
     const x = xOf(i);
     if (!slot.hours || slot.hours <= 0) {
@@ -743,6 +781,8 @@ function renderChart(history) {
     const barH  = (Math.min(slot.hours, MAX_H) / MAX_H) * chartH;
     const barY  = PAD_T + chartH - barH;
     const color = barColor(slot.hours);
+
+    chartHitAreas.push({ x, barY, barW, barH, slot });
 
     // Glow
     ctx.shadowColor  = color;
@@ -784,6 +824,42 @@ function renderChart(history) {
   });
 }
 
+// ── Chart hover tooltip ────────────────────────────────────────
+(function () {
+  const canvas  = document.getElementById('sleepChart');
+  const tooltip = document.getElementById('chartTooltip');
+
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    const hit = chartHitAreas.find(a =>
+      mx >= a.x - a.barW / 2 - 6 &&
+      mx <= a.x + a.barW / 2 + 6 &&
+      my >= a.barY - 4 &&
+      my <= a.barY + a.barH + 4
+    );
+
+    if (hit) {
+      tooltip.textContent = fmtSleepDur(hit.slot.hours);
+      tooltip.style.display = 'block';
+      const tipX = hit.x;
+      const tipY = hit.barY - 32;
+      tooltip.style.left = tipX + 'px';
+      tooltip.style.top  = Math.max(0, tipY) + 'px';
+      canvas.style.cursor = 'default';
+    } else {
+      tooltip.style.display = 'none';
+      canvas.style.cursor = '';
+    }
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    tooltip.style.display = 'none';
+  });
+})();
+
 // ── Main ───────────────────────────────────────────────────────
 function render() {
   ingestGarminSleep();
@@ -811,6 +887,37 @@ function render() {
   renderWeeklyStats(history);
   renderChart(history);
 }
+
+// ── Sync Garmin from sleep page ───────────────────────────────
+async function syncGarminFromSleep() {
+  const btn = document.getElementById('sleepSyncBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  const subtitle = document.getElementById('sleepSubtitle');
+  const prevText = subtitle.textContent;
+  subtitle.textContent = 'Syncing…';
+  try {
+    const localDate = (offset = 0) => {
+      const d = new Date(); d.setDate(d.getDate() + offset);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    };
+    const res = await fetch(`/api/garmin?date=${localDate(0)}&yesterday=${localDate(-1)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Server error ' + res.status);
+    data.fetchedAt = data.fetchedAt || new Date().toISOString();
+    storeSet(GARMIN_CACHE_KEY, data);
+    render();
+  } catch (err) {
+    console.error('Sleep sync error:', err);
+    subtitle.textContent = 'Sync failed — try again';
+    setTimeout(() => { subtitle.textContent = prevText; }, 3000);
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('sleepSyncBtn').addEventListener('click', syncGarminFromSleep);
 
 render();
 
